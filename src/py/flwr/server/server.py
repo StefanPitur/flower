@@ -38,7 +38,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.strategy import FedAvg, Strategy
 
-from .server_config import ServerConfig
+from .server_config import ServerConfig, CommunicationType
 
 FitResultsAndFailures = Tuple[
     List[Tuple[ClientProxy, FitRes]],
@@ -61,6 +61,7 @@ class Server:
         self,
         *,
         client_manager: ClientManager,
+        communication_type: CommunicationType = CommunicationType.GRPC,
         strategy: Optional[Strategy] = None,
     ) -> None:
         self._client_manager: ClientManager = client_manager
@@ -69,6 +70,7 @@ class Server:
         )
         self.strategy: Strategy = strategy if strategy is not None else FedAvg()
         self.max_workers: Optional[int] = None
+        self.communication_type: CommunicationType = communication_type
 
     def set_max_workers(self, max_workers: Optional[int]) -> None:
         """Set the max_workers used by ThreadPoolExecutor."""
@@ -85,6 +87,7 @@ class Server:
     # pylint: disable=too-many-locals
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
+        print("FIND ME! - server.fit")
         history = History()
 
         # Initialize parameters
@@ -462,19 +465,20 @@ def init_defaults(
     client_manager: Optional[ClientManager],
 ) -> Tuple[Server, ServerConfig]:
     """Create server instance if none was given."""
+
+    print("FIND ME! server/server.py")
+    # Set default config values
+    if config is None:
+        config = ServerConfig()
+
     if server is None:
         if client_manager is None:
             client_manager = SimpleClientManager()
         if strategy is None:
             strategy = FedAvg()
-        server = Server(client_manager=client_manager, strategy=strategy)
+        server = Server(client_manager=client_manager, strategy=strategy, communication_type=config.communication_type)
     elif strategy is not None:
         log(WARN, "Both server and strategy were provided, ignoring strategy")
-
-    # Set default config values
-    if config is None:
-        config = ServerConfig()
-
     return server, config
 
 

@@ -103,6 +103,8 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
         client_proxy = self.client_proxy_factory(cid, bridge)
         is_success = register_client_proxy(self.client_manager, client_proxy, context)
 
+        print("NEBUNIA LUI JUVEL flower_service_service.Join")
+
         if is_success:
             # Get iterators
             client_message_iterator = TimeoutIterator(

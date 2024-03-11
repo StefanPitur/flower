@@ -99,6 +99,9 @@ def start_server(  # pylint: disable=too-many-arguments,too-many-locals
         Flower clients. The default should be sufficient for most models.
         Users who train very large models might need to increase this
         value. Note that the Flower clients need to be started with the
+
+        HOPA UITA-TE SI AICI!!!
+
         same value (see `flwr.client.start_client`), otherwise clients will
         not know about the increased limit and block larger messages.
     certificates : Tuple[bytes, bytes, bytes] (default: None)
@@ -147,6 +150,9 @@ def start_server(  # pylint: disable=too-many-arguments,too-many-locals
         strategy=strategy,
         client_manager=client_manager,
     )
+
+    print(f"Server communication_type = {initialized_server.communication_type}")
+
     log(
         INFO,
         "Starting Flower server, config: %s",

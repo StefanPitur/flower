@@ -85,7 +85,7 @@ def main() -> None:
     # Configure logger and start server
     fl.common.logger.configure("server", host=args.log_host)
     fl.server.start_server(
-        args.server_address,
+        server_address=args.server_address,
         config={"num_rounds": args.rounds},
         strategy=strategy,
     )

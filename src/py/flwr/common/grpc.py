@@ -22,7 +22,7 @@ import grpc
 
 from flwr.common.logger import log
 
-GRPC_MAX_MESSAGE_LENGTH: int = 536_870_912  # == 512 * 1024 * 1024
+GRPC_MAX_MESSAGE_LENGTH: int = 536_870_912  # == 512 * 1024 * 1024 hopa
 
 
 def create_channel(

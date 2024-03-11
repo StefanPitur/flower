@@ -131,6 +131,7 @@ def grpc_connection(  # pylint: disable=R0915
     server_message_iterator: Iterator[ServerMessage] = stub.Join(iter(queue.get, None))
 
     def receive() -> Message:
+        print("STEFAN - connection.py in grpc_connection.receive()")
         # Receive ServerMessage proto
         proto = next(server_message_iterator)
 
@@ -169,8 +170,9 @@ def grpc_connection(  # pylint: disable=R0915
                 "cannot deserialize from ProtoBuf"
             )
 
+
         # Construct Message
-        return Message(
+        message = Message(
             metadata=Metadata(
                 run_id=0,
                 message_id=str(uuid.uuid4()),
@@ -183,6 +185,10 @@ def grpc_connection(  # pylint: disable=R0915
             ),
             content=recordset,
         )
+        print("connection.py - receive message:")
+        print(message)
+        print("----------")
+        return message
 
     def send(message: Message) -> None:
         # Retrieve RecordSet and message_type

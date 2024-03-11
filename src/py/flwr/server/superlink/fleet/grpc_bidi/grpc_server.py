@@ -55,6 +55,8 @@ def valid_certificates(certificates: Tuple[bytes, bytes, bytes]) -> bool:
     return is_valid
 
 
+
+# Look here
 def start_grpc_server(  # pylint: disable=too-many-arguments
     client_manager: ClientManager,
     server_address: str,
@@ -134,6 +136,7 @@ def start_grpc_server(  # pylint: disable=too-many-arguments
     >>>     ),
     >>> )
     """
+    print("Starting grpc STEFAN ! - grpc_server.py")
     servicer = FlowerServiceServicer(client_manager)
     add_servicer_to_server_fn = add_FlowerServiceServicer_to_server
 

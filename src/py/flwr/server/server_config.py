@@ -14,9 +14,14 @@
 # ==============================================================================
 """Flower ServerConfig."""
 
-
+from enum import Enum
 from dataclasses import dataclass
 from typing import Optional
+
+
+class CommunicationType(Enum):
+    GRPC = 0
+    MINIO = 1
 
 
 @dataclass
@@ -27,5 +32,6 @@ class ServerConfig:
     they care about.
     """
 
+    communication_type: CommunicationType = CommunicationType.GRPC
     num_rounds: int = 1
     round_timeout: Optional[float] = None
