@@ -31,6 +31,7 @@ from flwr.common import (
 )
 from flwr.common import recordset_compat as compat
 from flwr.common import serde
+from flwr.common.client_message_batching import batch_client_message
 from flwr.common.constant import (
     MESSAGE_TYPE_EVALUATE,
     MESSAGE_TYPE_FIT,
@@ -39,10 +40,11 @@ from flwr.common.constant import (
 )
 from flwr.common.grpc import create_channel
 from flwr.common.logger import log
+from flwr.common.server_message_batching import get_server_message_from_batches
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ClientMessage,
     Reason,
-    ServerMessage,
+    ServerMessageChunk,
 )
 from flwr.proto.transport_pb2_grpc import FlowerServiceStub  # pylint: disable=E0611
 
@@ -123,17 +125,16 @@ def grpc_connection(  # pylint: disable=R0915
     )
     channel.subscribe(on_channel_state_change)
 
-    queue: Queue[ClientMessage] = Queue(  # pylint: disable=unsubscriptable-object
-        maxsize=1
-    )
+    queue: Queue[ClientMessage] = Queue()  # pylint: disable=unsubscriptable-object
+
     stub = FlowerServiceStub(channel)
 
-    server_message_iterator: Iterator[ServerMessage] = stub.Join(iter(queue.get, None))
+    server_message_chunks_iterator: Iterator[ServerMessageChunk] = stub.Join(iter(queue.get, None))
 
     def receive() -> Message:
         print("STEFAN - connection.py in grpc_connection.receive()")
         # Receive ServerMessage proto
-        proto = next(server_message_iterator)
+        proto = get_server_message_from_batches(server_message_chunks_iterator)
 
         # ServerMessage proto --> *Ins --> RecordSet
         field = proto.WhichOneof("msg")
@@ -222,8 +223,9 @@ def grpc_connection(  # pylint: disable=R0915
         else:
             raise ValueError(f"Invalid message type: {message_type}")
 
-        # Send ClientMessage proto
-        return queue.put(msg_proto, block=False)
+        client_message_chunks = batch_client_message(msg_proto, max_message_length)
+        for client_message_chunk in client_message_chunks:
+            queue.put(client_message_chunk, block=False)
 
     try:
         # Yield methods

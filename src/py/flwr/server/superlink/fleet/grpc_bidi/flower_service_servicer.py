@@ -24,10 +24,12 @@ from typing import Callable, Iterator
 import grpc
 from iterators import TimeoutIterator
 
+from flwr.common.client_message_batching import get_client_message_from_batches
+from flwr.common.server_message_batching import batch_server_message
 from flwr.proto import transport_pb2_grpc  # pylint: disable=E0611
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
-    ClientMessage,
-    ServerMessage,
+    ServerMessageChunk,
+    ClientMessageChunk
 )
 from flwr.server.client_manager import ClientManager
 from flwr.server.superlink.fleet.grpc_bidi.grpc_bridge import (
@@ -70,21 +72,23 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
 
     def __init__(
         self,
+        max_message_length: int,
         client_manager: ClientManager,
         grpc_bridge_factory: Callable[[], GrpcBridge] = default_bridge_factory,
         grpc_client_proxy_factory: Callable[
             [str, GrpcBridge], GrpcClientProxy
         ] = default_grpc_client_proxy_factory,
     ) -> None:
+        self.max_message_length = max_message_length
         self.client_manager: ClientManager = client_manager
         self.grpc_bridge_factory = grpc_bridge_factory
         self.client_proxy_factory = grpc_client_proxy_factory
 
     def Join(  # pylint: disable=invalid-name
         self,
-        request_iterator: Iterator[ClientMessage],
+        request_iterator: Iterator[ClientMessageChunk],
         context: grpc.ServicerContext,
-    ) -> Iterator[ServerMessage]:
+    ) -> Iterator[ServerMessageChunk]:
         """Facilitate bi-directional streaming of messages between server and client.
 
         Invoked by each gRPC client which participates in the network.
@@ -117,14 +121,21 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
                 try:
                     # Get ins_wrapper from bridge and yield server_message
                     ins_wrapper: InsWrapper = next(ins_wrapper_iterator)
-                    yield ins_wrapper.server_message
+                    server_message = ins_wrapper.server_message
+
+                    server_message_chunks = batch_server_message(
+                        server_message=server_message,
+                        chunk_size=self.max_message_length
+                    )
+                    for server_message_chunk in server_message_chunks:
+                        yield server_message_chunk
 
                     # Set current timeout, might be None
                     if ins_wrapper.timeout is not None:
                         client_message_iterator.set_timeout(ins_wrapper.timeout)
 
                     # Wait for client message
-                    client_message = next(client_message_iterator)
+                    client_message = get_client_message_from_batches(client_message_iterator)
 
                     if client_message is client_message_iterator.get_sentinel():
                         # Important: calling `context.abort` in gRPC always

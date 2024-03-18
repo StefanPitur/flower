@@ -18,7 +18,7 @@ syntax = "proto3";
 package flwr.proto;
 
 service FlowerService {
-  rpc Join(stream ClientMessage) returns (stream ServerMessage) {}
+  rpc Join(stream ClientMessageChunk) returns (stream ServerMessageChunk) {}
 }
 
 enum Code {
@@ -44,6 +44,12 @@ enum Reason {
   ACK = 4;
 }
 
+message ServerMessageChunk {
+  int64 batch_number = 1;
+  int64 num_batches = 2;
+  bytes server_message_chunk = 3;
+}
+
 message ServerMessage {
   message ReconnectIns { int64 seconds = 1; }
   message GetPropertiesIns { map<string, Scalar> config = 1; }
@@ -63,6 +69,12 @@ message ServerMessage {
     FitIns fit_ins = 4;
     EvaluateIns evaluate_ins = 5;
   }
+}
+
+message ClientMessageChunk {
+  int64 batch_number = 1;
+  int64 num_batches = 2;
+  bytes client_message_chunk = 3;
 }
 
 message ClientMessage {
