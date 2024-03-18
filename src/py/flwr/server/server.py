@@ -39,6 +39,7 @@ from flwr.server.history import History
 from flwr.server.strategy import FedAvg, Strategy
 
 from .server_config import ServerConfig
+from .superlink.fleet.grpc_bidi.grpc_client_proxy import GrpcClientProxy
 
 FitResultsAndFailures = Tuple[
     List[Tuple[ClientProxy, FitRes]],
@@ -280,7 +281,7 @@ class Server:
 
         # Get initial parameters from one of the clients
         log(INFO, "Requesting initial parameters from one random client")
-        random_client = self._client_manager.sample(1)[0]
+        random_client: GrpcClientProxy = self._client_manager.sample(1)[0]
         ins = GetParametersIns(config={})
         get_parameters_res = random_client.get_parameters(
             ins=ins, timeout=timeout, group_id=server_round
