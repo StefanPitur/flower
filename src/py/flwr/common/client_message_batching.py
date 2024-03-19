@@ -3,7 +3,12 @@ from typing import List, Iterator
 from flwr.proto.transport_pb2 import ClientMessageChunk, ClientMessage
 
 
+def get_client_message_chunk_size() -> int:
+    return len(ClientMessageChunk(client_message_chunk=b"").SerializeToString()) + 16
+
+
 def batch_client_message(client_message: ClientMessage, chunk_size: int) -> List[ClientMessageChunk]:
+    print(f"Sending chunk of size {chunk_size} to")
     client_message_bytes = client_message.SerializeToString()
     client_message_bytes_len = len(client_message_bytes)
 
@@ -14,11 +19,16 @@ def batch_client_message(client_message: ClientMessage, chunk_size: int) -> List
                       (chunk_num - 1) * chunk_size:
                       min(chunk_num * chunk_size, client_message_bytes_len)
                       ]
-        client_message_chunks.append(ClientMessageChunk(
+
+        cm = ClientMessageChunk(
             batch_number=chunk_num,
             num_batches=num_chunks,
             client_message_chunk=chunk_bytes
-        ))
+        )
+
+        print(f"cm size = {len(cm.SerializeToString())}")
+
+        client_message_chunks.append(cm)
 
     return client_message_chunks
 

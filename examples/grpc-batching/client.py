@@ -47,5 +47,6 @@ class FlowerClient(fl.client.NumPyClient):
 if __name__ == "__main__":
     fl.client.start_client(
         server_address="localhost:8080",
-        client=FlowerClient().to_client()
+        client=FlowerClient().to_client(),
+        grpc_max_message_length=128
     )
