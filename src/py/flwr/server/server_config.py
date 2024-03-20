@@ -32,6 +32,5 @@ class ServerConfig:
     they care about.
     """
 
-    communication_type: CommunicationType = CommunicationType.GRPC
     num_rounds: int = 1
     round_timeout: Optional[float] = None

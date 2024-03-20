@@ -43,7 +43,7 @@ from flwr.proto.fleet_pb2_grpc import (  # pylint: disable=E0611
 from .client_manager import ClientManager
 from .history import History
 from .server import Server, init_defaults, run_fl
-from .server_config import ServerConfig
+from .server_config import ServerConfig, CommunicationType
 from .strategy import Strategy
 from .superlink.driver.driver_grpc import run_driver_api_grpc
 from .superlink.fleet.grpc_bidi.grpc_server import (
@@ -53,6 +53,7 @@ from .superlink.fleet.grpc_bidi.grpc_server import (
 from .superlink.fleet.grpc_rere.fleet_servicer import FleetServicer
 from .superlink.fleet.vce import start_vce
 from .superlink.state import StateFactory
+from ..minio.utils import create_minio_client
 
 ADDRESS_DRIVER_API = "0.0.0.0:9091"
 ADDRESS_FLEET_API_GRPC_RERE = "0.0.0.0:9092"
@@ -71,6 +72,11 @@ def start_server(  # pylint: disable=too-many-arguments,too-many-locals
     client_manager: Optional[ClientManager] = None,
     grpc_max_message_length: int = GRPC_MAX_MESSAGE_LENGTH,
     certificates: Optional[Tuple[bytes, bytes, bytes]] = None,
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    minio_url: Optional[str] = None,
+    minio_access_key: Optional[str] = None,
+    minio_secret_key: Optional[str] = None,
+    minio_bucket_name: Optional[str] = None
 ) -> History:
     """Start a Flower server using the gRPC transport layer.
 
@@ -143,6 +149,17 @@ def start_server(  # pylint: disable=too-many-arguments,too-many-locals
     host, port, is_v6 = parsed_address
     address = f"[{host}]:{port}" if is_v6 else f"{host}:{port}"
 
+    minio_client = None
+    if communication_type == CommunicationType.MINIO:
+        if minio_bucket_name is None:
+            raise ValueError("When using MinIO for communication, minio_bucket_name is required.")
+
+        minio_client = create_minio_client(
+            minio_url=minio_url,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key
+        )
+
     # Initialize server and server config
     initialized_server, initialized_config = init_defaults(
         server=server,
@@ -150,9 +167,6 @@ def start_server(  # pylint: disable=too-many-arguments,too-many-locals
         strategy=strategy,
         client_manager=client_manager,
     )
-
-    print(f"Server communication_type = {initialized_server.communication_type}")
-
     log(
         INFO,
         "Starting Flower server, config: %s",
@@ -165,6 +179,8 @@ def start_server(  # pylint: disable=too-many-arguments,too-many-locals
         server_address=address,
         max_message_length=grpc_max_message_length,
         certificates=certificates,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
     )
     log(
         INFO,
