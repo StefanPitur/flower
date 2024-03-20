@@ -22,6 +22,8 @@ from pathlib import Path
 from queue import Queue
 from typing import Callable, Iterator, Optional, Tuple, Union, cast
 
+from minio import Minio
+
 from flwr.common import (
     GRPC_MAX_MESSAGE_LENGTH,
     ConfigsRecord,
@@ -31,7 +33,7 @@ from flwr.common import (
 )
 from flwr.common import recordset_compat as compat
 from flwr.common import serde
-from flwr.common.client_message_batching import batch_client_message
+from flwr.common.client_message_batching import batch_client_message, push_client_message_to_minio
 from flwr.common.constant import (
     MESSAGE_TYPE_EVALUATE,
     MESSAGE_TYPE_FIT,
@@ -40,13 +42,15 @@ from flwr.common.constant import (
 )
 from flwr.common.grpc import create_channel
 from flwr.common.logger import log
-from flwr.common.server_message_batching import get_server_message_from_batches
+from flwr.common.server_message_batching import get_server_message_from_batches, get_server_message_from_minio
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ClientMessage,
     Reason,
-    ServerMessageChunk,
+    ServerMessageChunk, MessageMinIO,
 )
 from flwr.proto.transport_pb2_grpc import FlowerServiceStub  # pylint: disable=E0611
+from flwr.server.server_config import CommunicationType
+
 
 # The following flags can be uncommented for debugging. Other possible values:
 # https://github.com/grpc/grpc/blob/master/doc/environment_variables.md
@@ -66,6 +70,9 @@ def grpc_connection(  # pylint: disable=R0915
     insecure: bool,
     max_message_length: int = GRPC_MAX_MESSAGE_LENGTH,
     root_certificates: Optional[Union[bytes, str]] = None,
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    minio_client: Optional[Minio] = None,
+    minio_bucket_name: Optional[str] = None,
 ) -> Iterator[
     Tuple[
         Callable[[], Optional[Message]],
@@ -125,16 +132,27 @@ def grpc_connection(  # pylint: disable=R0915
     )
     channel.subscribe(on_channel_state_change)
 
-    queue: Queue[ClientMessage] = Queue()  # pylint: disable=unsubscriptable-object
+    queue_client_message: Queue[ClientMessage] = Queue()  # pylint: disable=unsubscriptable-object
+    queue_client_message_minio: Queue[MessageMinIO] = Queue(maxsize=1)  # pylint: disable=unsubscriptable-object
 
     stub = FlowerServiceStub(channel)
 
-    server_message_chunks_iterator: Iterator[ServerMessageChunk] = stub.Join(iter(queue.get, None))
+    server_message_chunks_iterator: Iterator[ServerMessageChunk] = stub.Join(iter(queue_client_message.get, None))
+    message_minio_iterator: Iterator[MessageMinIO] = stub.JoinMinIO(iter(queue_client_message_minio.get, None))
 
     def receive() -> Message:
         print("STEFAN - connection.py in grpc_connection.receive()")
         # Receive ServerMessage proto
-        proto = get_server_message_from_batches(server_message_chunks_iterator)
+        if communication_type == CommunicationType.GRPC:
+            proto = get_server_message_from_batches(server_message_chunks_iterator)
+        elif communication_type == CommunicationType.MINIO:
+            proto = get_server_message_from_minio(
+                minio_client=minio_client,
+                server_message_minio_iterator=message_minio_iterator
+            )
+            print(f"grpc_connection - receive() : {proto}")
+        else:
+            raise ValueError(f"Unknown communication type: {communication_type}")
 
         # ServerMessage proto --> *Ins --> RecordSet
         field = proto.WhichOneof("msg")
@@ -223,9 +241,21 @@ def grpc_connection(  # pylint: disable=R0915
         else:
             raise ValueError(f"Invalid message type: {message_type}")
 
-        client_message_chunks = batch_client_message(msg_proto, max_message_length)
-        for client_message_chunk in client_message_chunks:
-            queue.put(client_message_chunk, block=False)
+        if communication_type == CommunicationType.GRPC:
+            client_message_chunks = batch_client_message(msg_proto, max_message_length)
+            for client_message_chunk in client_message_chunks:
+                queue_client_message.put(client_message_chunk, block=False)
+        elif communication_type == CommunicationType.MINIO:
+            client_message_minio = push_client_message_to_minio(
+                minio_client=minio_client,
+                bucket_name=minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                client_message=msg_proto
+            )
+            print(f"grpc_connection - send() :\n {client_message_minio}")
+            queue_client_message_minio.put(client_message_minio, block=False)
+        else:
+            raise ValueError(f"Unknown communication type: {communication_type}")
 
     try:
         # Yield methods
