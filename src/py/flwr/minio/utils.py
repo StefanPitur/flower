@@ -26,20 +26,16 @@ def persist_to_minio(client: Minio, bucket_name: str, destination_file: str, buf
     )
 
 
-def fetch_from_minio(
-    client: Minio, bucket_name: str, source_file: str, buffer_size: int, chunk_size: int = 1024 ** 2
-) -> bytearray:
-    result = bytearray()
-    for offset in tqdm(range(0, buffer_size, chunk_size), desc="Fetching data from MinIO"):
-        try:
-            response = client.get_object(
-                bucket_name=bucket_name,
-                object_name=source_file,
-                offset=offset,
-                length=chunk_size
-            )
-            result.extend(response.read())
-        finally:
-            response.close()
-            response.release_conn()
+def delete_from_minio(client: Minio, bucket_name: str, source_file: str) -> None:
+    client.remove_object(
+        bucket_name=bucket_name,
+        object_name=source_file
+    )
+
+
+def fetch_from_minio(client: Minio, bucket_name: str, source_file: str) -> bytes:
+    response = client.get_object(bucket_name=bucket_name, object_name=source_file)
+    result = response.read()
+    response.close()
+    response.release_conn()
     return result
