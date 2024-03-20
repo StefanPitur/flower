@@ -369,9 +369,6 @@ def _start_client_internal(
     connection, address = _init_connection(
         transport=transport,
         server_address=server_address,
-        communication_type=communication_type,
-        minio_client=minio_client,
-        minio_bucket_name=minio_bucket_name
     )
 
     node_state = NodeState()
@@ -383,6 +380,9 @@ def _start_client_internal(
             insecure,
             grpc_max_message_length,
             root_certificates,
+            communication_type,
+            minio_client,
+            minio_bucket_name
         ) as conn:
             receive, send, create_node, delete_node = conn
 
@@ -544,12 +544,9 @@ def start_numpy_client(
 def _init_connection(
         transport: Optional[str],
         server_address: str,
-        communication_type: CommunicationType,
-        minio_client: Optional[Minio],
-        minio_bucket_name: Optional[str]
 ) -> Tuple[
     Callable[
-        [str, bool, int, Union[bytes, str, None]],
+        [str, bool, int, Union[bytes, str, None], CommunicationType, Union[Minio, None], Union[str, None]],
         ContextManager[
             Tuple[
                 Callable[[], Optional[Message]],
@@ -587,12 +584,7 @@ def _init_connection(
     elif transport == TRANSPORT_TYPE_GRPC_RERE:
         connection = grpc_request_response
     elif transport == TRANSPORT_TYPE_GRPC_BIDI:
-        connection = partial(
-            grpc_connection,
-            communication_type=communication_type,
-            minio_client=minio_client,
-            minio_bucket_name=minio_bucket_name
-        )
+        connection = grpc_connection
     else:
         raise ValueError(
             f"Unknown transport type: {transport} (possible: {TRANSPORT_TYPES})"

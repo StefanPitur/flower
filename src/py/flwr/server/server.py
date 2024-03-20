@@ -281,7 +281,7 @@ class Server:
 
         # Get initial parameters from one of the clients
         log(INFO, "Requesting initial parameters from one random client")
-        random_client: GrpcClientProxy = self._client_manager.sample(1)[0]
+        random_client: ClientProxy = self._client_manager.sample(1)[0]
         ins = GetParametersIns(config={})
         get_parameters_res = random_client.get_parameters(
             ins=ins, timeout=timeout, group_id=server_round

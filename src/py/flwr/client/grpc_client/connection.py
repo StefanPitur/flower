@@ -101,6 +101,12 @@ def grpc_connection(  # pylint: disable=R0915
         The PEM-encoded root certificates as a byte string or a path string.
         If provided, a secure connection using the certificates will be
         established to an SSL-enabled Flower server.
+    communication_type : CommunicationType (default: CommunicationType.GRPC)
+        Used to determine whether to use gRPC communication or MinIO.
+    minio_client : Optional[Minio] (default: None)
+        Used when communicating via MinIO to connect to the correct instance.
+    minio_bucket_name : Optional[str] (default: None)
+        Used when communicating via MinIO where you want to put the data in a specific bucket.
 
     Returns
     -------
@@ -137,8 +143,12 @@ def grpc_connection(  # pylint: disable=R0915
 
     stub = FlowerServiceStub(channel)
 
-    server_message_chunks_iterator: Iterator[ServerMessageChunk] = stub.Join(iter(queue_client_message.get, None))
-    message_minio_iterator: Iterator[MessageMinIO] = stub.JoinMinIO(iter(queue_client_message_minio.get, None))
+    if communication_type == CommunicationType.GRPC:
+        server_message_chunks_iterator: Iterator[ServerMessageChunk] = stub.Join(iter(queue_client_message.get, None))
+    elif communication_type == CommunicationType.MINIO:
+        message_minio_iterator: Iterator[MessageMinIO] = stub.JoinMinIO(iter(queue_client_message_minio.get, None))
+    else:
+        raise ValueError(f"Unknown communication type: {communication_type}")
 
     def receive() -> Message:
         print("STEFAN - connection.py in grpc_connection.receive()")
