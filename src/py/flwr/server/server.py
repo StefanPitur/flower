@@ -62,7 +62,6 @@ class Server:
         self,
         *,
         client_manager: ClientManager,
-        communication_type: CommunicationType = CommunicationType.GRPC,
         strategy: Optional[Strategy] = None,
     ) -> None:
         self._client_manager: ClientManager = client_manager
@@ -71,7 +70,6 @@ class Server:
         )
         self.strategy: Strategy = strategy if strategy is not None else FedAvg()
         self.max_workers: Optional[int] = None
-        self.communication_type: CommunicationType = communication_type
 
     def set_max_workers(self, max_workers: Optional[int]) -> None:
         """Set the max_workers used by ThreadPoolExecutor."""
@@ -88,7 +86,6 @@ class Server:
     # pylint: disable=too-many-locals
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
-        print("FIND ME! - server.fit")
         history = History()
 
         # Initialize parameters
@@ -466,8 +463,6 @@ def init_defaults(
     client_manager: Optional[ClientManager],
 ) -> Tuple[Server, ServerConfig]:
     """Create server instance if none was given."""
-
-    print("FIND ME! server/server.py")
     # Set default config values
     if config is None:
         config = ServerConfig()
@@ -477,7 +472,7 @@ def init_defaults(
             client_manager = SimpleClientManager()
         if strategy is None:
             strategy = FedAvg()
-        server = Server(client_manager=client_manager, strategy=strategy, communication_type=config.communication_type)
+        server = Server(client_manager=client_manager, strategy=strategy)
     elif strategy is not None:
         log(WARN, "Both server and strategy were provided, ignoring strategy")
     return server, config
