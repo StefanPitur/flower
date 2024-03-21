@@ -11,6 +11,3 @@ if __name__ == "__main__":
         minio_secret_key="LmFrozQ4eRAnBcjzPRAjr77HAa7Bz3YYVmkv72MT",
         minio_bucket_name="test-bucket"
     )
-
-# https://github.com/StefanPitur/flower/compare/46c4faa..ee7ea9d
-# 46c4faa808e3af0d300a664969acbfa734c0c829
