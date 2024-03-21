@@ -4,7 +4,7 @@ from flwr.server.server_config import CommunicationType
 if __name__ == "__main__":
     fl.server.start_server(
         server_address="0.0.0.0:8080",
-        config=fl.server.ServerConfig(num_rounds=3),
+        config=fl.server.ServerConfig(num_rounds=100),
         communication_type=CommunicationType.MINIO,
         minio_url="localhost:9000",
         minio_access_key="KiCzggMrhevUXL7qEBaX",
