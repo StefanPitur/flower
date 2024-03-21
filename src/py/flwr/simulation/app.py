@@ -162,8 +162,6 @@ def start_simulation(
         Object containing metrics from training.
     """  # noqa: E501
 
-    print("Stefan - Start Simulation - simulation/app.py via start_simulation")
-
     # pylint: disable-msg=too-many-locals
     event(
         EventType.START_SIMULATION_ENTER,

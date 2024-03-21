@@ -79,7 +79,6 @@ def get_thread_exception_hook(stop_event: asyncio.Event) -> Callable[[Any], None
 
 def run_simulation() -> None:
     """Run Simulation Engine."""
-    print("Stefan - run_simulation.py")
     args = _parse_args_run_simulation().parse_args()
 
     # Load JSON config
