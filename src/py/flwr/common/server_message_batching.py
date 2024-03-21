@@ -79,11 +79,11 @@ def get_server_message_from_minio(
         source_file=server_message_minio.source_file
     )
 
-    # delete_from_minio(
-    #     client=minio_client,
-    #     bucket_name=server_message_minio.bucket_name,
-    #     source_file=server_message_minio.source_file
-    # )
+    delete_from_minio(
+        client=minio_client,
+        bucket_name=server_message_minio.bucket_name,
+        source_file=server_message_minio.source_file
+    )
 
     server_message = ServerMessage()
     server_message.ParseFromString(server_message_bytes)

@@ -77,11 +77,11 @@ def get_client_message_from_minio(
         source_file=client_message_minio.source_file
     )
 
-    # delete_from_minio(
-    #     client=minio_client,
-    #     bucket_name=client_message_minio.bucket_name,
-    #     source_file=client_message_minio.source_file
-    # )
+    delete_from_minio(
+        client=minio_client,
+        bucket_name=client_message_minio.bucket_name,
+        source_file=client_message_minio.source_file
+    )
 
     client_message = ClientMessage()
     client_message.ParseFromString(client_message_bytes)
