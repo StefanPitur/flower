@@ -26,7 +26,10 @@ from minio import Minio
 from flwr.client.message_handler.message_handler import validate_out_message
 from flwr.client.message_handler.task_handler import get_task_ins, validate_task_ins
 from flwr.common import GRPC_MAX_MESSAGE_LENGTH
+from flwr.common.constant import DELETE_NODE_REQUEST_BATCH_HEADER_SIZE, \
+    PULL_TASK_INS_REQUEST_BATCH_HEADER_SIZE, PUSH_TASK_RES_REQUEST_BATCH_HEADER_SIZE
 from flwr.common.grpc import create_channel
+from flwr.common.grpc_message_batching import batch_grpc_message, get_message_from_batches
 from flwr.common.logger import log, warn_experimental_feature
 from flwr.common.message import Message, Metadata
 from flwr.common.serde import message_from_taskins, message_to_taskres
@@ -34,7 +37,8 @@ from flwr.proto.fleet_pb2 import (  # pylint: disable=E0611
     CreateNodeRequest,
     DeleteNodeRequest,
     PullTaskInsRequest,
-    PushTaskResRequest,
+    PushTaskResRequest, CreateNodeResponse, DeleteNodeRequestBatch, PullTaskInsRequestBatch,
+    PullTaskInsResponse, PushTaskResRequestBatch,
 )
 from flwr.proto.fleet_pb2_grpc import FleetStub  # pylint: disable=E0611
 from flwr.proto.node_pb2 import Node  # pylint: disable=E0611
@@ -125,9 +129,15 @@ def grpc_request_response(
     def create_node() -> None:
         """Set create_node."""
         create_node_request = CreateNodeRequest()
-        create_node_response = stub.CreateNode(
+        create_node_response_iterator = stub.CreateNode(
             request=create_node_request,
         )
+
+        create_node_response = get_message_from_batches(
+            batch_messages_iterator=create_node_response_iterator,
+            message_type=CreateNodeResponse
+        )
+
         node_store[KEY_NODE] = create_node_response.node
 
     def delete_node() -> None:
@@ -139,8 +149,17 @@ def grpc_request_response(
         node: Node = cast(Node, node_store[KEY_NODE])
 
         delete_node_request = DeleteNodeRequest(node=node)
-        stub.DeleteNode(request=delete_node_request)
 
+        delete_node_request_iterator = iter(
+            batch_grpc_message(
+                message=delete_node_request,
+                batch_size=max_message_length,
+                batch_message_type=DeleteNodeRequestBatch,
+                batch_message_header_size=DELETE_NODE_REQUEST_BATCH_HEADER_SIZE
+            )
+        )
+
+        stub.DeleteNode(request_iterator=delete_node_request_iterator)
         del node_store[KEY_NODE]
 
     def receive() -> Optional[Message]:
@@ -153,7 +172,22 @@ def grpc_request_response(
 
         # Request instructions (task) from server
         request = PullTaskInsRequest(node=node)
-        response = stub.PullTaskIns(request=request)
+
+        request_iterator = iter(
+            batch_grpc_message(
+                message=request,
+                batch_size=max_message_length,
+                batch_message_type=PullTaskInsRequestBatch,
+                batch_message_header_size=PULL_TASK_INS_REQUEST_BATCH_HEADER_SIZE
+            )
+        )
+
+        response_iterator = stub.PullTaskIns(request_iterator=request_iterator)
+
+        response = get_message_from_batches(
+            batch_messages_iterator=response_iterator,
+            message_type=PullTaskInsResponse
+        )
 
         # Get the current TaskIns
         task_ins: Optional[TaskIns] = get_task_ins(response)
@@ -197,7 +231,17 @@ def grpc_request_response(
 
         # Serialize ProtoBuf to bytes
         request = PushTaskResRequest(task_res_list=[task_res])
-        _ = stub.PushTaskRes(request)
+
+        request_iterator = iter(
+            batch_grpc_message(
+                message=request,
+                batch_size=max_message_length,
+                batch_message_type=PushTaskResRequestBatch,
+                batch_message_header_size=PUSH_TASK_RES_REQUEST_BATCH_HEADER_SIZE
+            )
+        )
+
+        _ = stub.PushTaskRes(request_iterator=request_iterator)
 
         state[KEY_METADATA] = None
 

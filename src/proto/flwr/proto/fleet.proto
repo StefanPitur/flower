@@ -21,29 +21,44 @@ import "flwr/proto/node.proto";
 import "flwr/proto/task.proto";
 
 service Fleet {
-  rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse) {}
-  rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse) {}
+  rpc CreateNode(CreateNodeRequest) returns (stream CreateNodeResponseBatch) {}
+  rpc DeleteNode(stream DeleteNodeRequest) returns (DeleteNodeResponse) {}
 
   // Retrieve one or more tasks, if possible
   //
   // HTTP API path: /api/v1/fleet/pull-task-ins
-  rpc PullTaskIns(PullTaskInsRequest) returns (PullTaskInsResponse) {}
+  rpc PullTaskIns(stream PullTaskInsRequestBatch) returns (stream PullTaskInsResponseBatch) {}
 
   // Complete one or more tasks, if possible
   //
   // HTTP API path: /api/v1/fleet/push-task-res
-  rpc PushTaskRes(PushTaskResRequest) returns (PushTaskResResponse) {}
+  rpc PushTaskRes(stream PushTaskResRequestBatch) returns (stream PushTaskResResponseBatch) {}
 }
 
 // CreateNode messages
+message CreateNodeResponseBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message CreateNodeRequest {}
 message CreateNodeResponse { Node node = 1; }
 
 // DeleteNode messages
+message DeleteNodeRequestBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message DeleteNodeRequest { Node node = 1; }
 message DeleteNodeResponse {}
 
 // PullTaskIns messages
+message PullTaskInsRequestBatch {
+  bytes message_batch_bytes = 1;
+}
+message PullTaskInsResponseBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message PullTaskInsRequest {
   Node node = 1;
   repeated string task_ids = 2;
@@ -54,6 +69,13 @@ message PullTaskInsResponse {
 }
 
 // PushTaskRes messages
+message PushTaskResRequestBatch {
+  bytes message_batch_bytes = 1;
+}
+message PushTaskResResponseBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message PushTaskResRequest { repeated TaskRes task_res_list = 1; }
 message PushTaskResResponse {
   Reconnect reconnect = 1;

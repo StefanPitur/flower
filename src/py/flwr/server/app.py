@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import grpc
+from minio import Minio
 
 from flwr.common import GRPC_MAX_MESSAGE_LENGTH, EventType, event
 from flwr.common.address import parse_address
@@ -240,10 +241,29 @@ def run_driver_api() -> None:
     grpc_server.wait_for_termination()
 
 
-def run_fleet_api() -> None:
+def run_fleet_api(
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    grpc_max_message_length: int = GRPC_MAX_MESSAGE_LENGTH,
+    minio_url: Optional[str] = None,
+    minio_access_key: Optional[str] = None,
+    minio_secret_key: Optional[str] = None,
+    minio_bucket_name: Optional[str] = None
+) -> None:
     """Run Flower server (Fleet API)."""
     log(INFO, "Starting Flower server (Fleet API)")
     event(EventType.RUN_FLEET_API_ENTER)
+
+    minio_client = None
+    if communication_type == communication_type.MINIO:
+        if minio_bucket_name is None:
+            raise ValueError("When using MinIO, you must specify the bucket name of the shared instance")
+
+        minio_client = create_minio_client(
+            minio_url=minio_url,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key
+        )
+
     args = _parse_args_run_fleet_api().parse_args()
 
     # Obtain certificates
@@ -292,6 +312,10 @@ def run_fleet_api() -> None:
             address=address,
             state_factory=state_factory,
             certificates=certificates,
+            grpc_max_message_length=grpc_max_message_length,
+            communication_type=communication_type,
+            minio_client=minio_client,
+            minio_bucket_name=minio_bucket_name
         )
         grpc_servers.append(fleet_server)
     else:
@@ -312,10 +336,29 @@ def run_fleet_api() -> None:
 
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
-def run_superlink() -> None:
+def run_superlink(
+        communication_type: CommunicationType = CommunicationType.GRPC,
+        grpc_max_message_length: Optional[int] = GRPC_MAX_MESSAGE_LENGTH,
+        minio_url: Optional[str] = None,
+        minio_access_key: Optional[str] = None,
+        minio_secret_key: Optional[str] = None,
+        minio_bucket_name: Optional[str] = None
+) -> None:
     """Run Flower server (Driver API and Fleet API)."""
     log(INFO, "Starting Flower server")
     event(EventType.RUN_SUPERLINK_ENTER)
+
+    minio_client = None
+    if communication_type == communication_type.MINIO:
+        if minio_bucket_name is None:
+            raise ValueError("When using MinIO, you must specify the bucket name of the shared instance")
+
+        minio_client = create_minio_client(
+            minio_url=minio_url,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key
+        )
+
     args = _parse_args_run_superlink().parse_args()
 
     # Parse IP address
@@ -378,6 +421,9 @@ def run_superlink() -> None:
             address=address,
             state_factory=state_factory,
             certificates=certificates,
+            grpc_max_message_length=grpc_max_message_length,
+            minio_client=minio_client,
+            minio_bucket_name=minio_bucket_name
         )
         grpc_servers.append(fleet_server)
     elif args.fleet_api_type == TRANSPORT_TYPE_VCE:
@@ -437,11 +483,16 @@ def _run_fleet_api_grpc_rere(
     address: str,
     state_factory: StateFactory,
     certificates: Optional[Tuple[bytes, bytes, bytes]],
+    grpc_max_message_length: GRPC_MAX_MESSAGE_LENGTH,
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    minio_client: Optional[Minio] = None,
+    minio_bucket_name: Optional[str] = None
 ) -> grpc.Server:
     """Run Fleet API (gRPC, request-response)."""
     # Create Fleet API gRPC server
     fleet_servicer = FleetServicer(
         state_factory=state_factory,
+        max_message_length=grpc_max_message_length
     )
     fleet_add_servicer_to_server_fn = add_FleetServicer_to_server
     fleet_grpc_server = generic_create_grpc_server(

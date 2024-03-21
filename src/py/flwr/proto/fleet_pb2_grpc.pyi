@@ -5,28 +5,29 @@ isort:skip_file
 import abc
 import flwr.proto.fleet_pb2
 import grpc
+import typing
 
 class FleetStub:
     def __init__(self, channel: grpc.Channel) -> None: ...
-    CreateNode: grpc.UnaryUnaryMultiCallable[
+    CreateNode: grpc.UnaryStreamMultiCallable[
         flwr.proto.fleet_pb2.CreateNodeRequest,
-        flwr.proto.fleet_pb2.CreateNodeResponse]
+        flwr.proto.fleet_pb2.CreateNodeResponseBatch]
 
-    DeleteNode: grpc.UnaryUnaryMultiCallable[
+    DeleteNode: grpc.StreamUnaryMultiCallable[
         flwr.proto.fleet_pb2.DeleteNodeRequest,
         flwr.proto.fleet_pb2.DeleteNodeResponse]
 
-    PullTaskIns: grpc.UnaryUnaryMultiCallable[
-        flwr.proto.fleet_pb2.PullTaskInsRequest,
-        flwr.proto.fleet_pb2.PullTaskInsResponse]
+    PullTaskIns: grpc.StreamStreamMultiCallable[
+        flwr.proto.fleet_pb2.PullTaskInsRequestBatch,
+        flwr.proto.fleet_pb2.PullTaskInsResponseBatch]
     """Retrieve one or more tasks, if possible
 
     HTTP API path: /api/v1/fleet/pull-task-ins
     """
 
-    PushTaskRes: grpc.UnaryUnaryMultiCallable[
-        flwr.proto.fleet_pb2.PushTaskResRequest,
-        flwr.proto.fleet_pb2.PushTaskResResponse]
+    PushTaskRes: grpc.StreamStreamMultiCallable[
+        flwr.proto.fleet_pb2.PushTaskResRequestBatch,
+        flwr.proto.fleet_pb2.PushTaskResResponseBatch]
     """Complete one or more tasks, if possible
 
     HTTP API path: /api/v1/fleet/push-task-res
@@ -38,19 +39,19 @@ class FleetServicer(metaclass=abc.ABCMeta):
     def CreateNode(self,
         request: flwr.proto.fleet_pb2.CreateNodeRequest,
         context: grpc.ServicerContext,
-    ) -> flwr.proto.fleet_pb2.CreateNodeResponse: ...
+    ) -> typing.Iterator[flwr.proto.fleet_pb2.CreateNodeResponseBatch]: ...
 
     @abc.abstractmethod
     def DeleteNode(self,
-        request: flwr.proto.fleet_pb2.DeleteNodeRequest,
+        request_iterator: typing.Iterator[flwr.proto.fleet_pb2.DeleteNodeRequest],
         context: grpc.ServicerContext,
     ) -> flwr.proto.fleet_pb2.DeleteNodeResponse: ...
 
     @abc.abstractmethod
     def PullTaskIns(self,
-        request: flwr.proto.fleet_pb2.PullTaskInsRequest,
+        request_iterator: typing.Iterator[flwr.proto.fleet_pb2.PullTaskInsRequestBatch],
         context: grpc.ServicerContext,
-    ) -> flwr.proto.fleet_pb2.PullTaskInsResponse:
+    ) -> typing.Iterator[flwr.proto.fleet_pb2.PullTaskInsResponseBatch]:
         """Retrieve one or more tasks, if possible
 
         HTTP API path: /api/v1/fleet/pull-task-ins
@@ -59,9 +60,9 @@ class FleetServicer(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def PushTaskRes(self,
-        request: flwr.proto.fleet_pb2.PushTaskResRequest,
+        request_iterator: typing.Iterator[flwr.proto.fleet_pb2.PushTaskResRequestBatch],
         context: grpc.ServicerContext,
-    ) -> flwr.proto.fleet_pb2.PushTaskResResponse:
+    ) -> typing.Iterator[flwr.proto.fleet_pb2.PushTaskResResponseBatch]:
         """Complete one or more tasks, if possible
 
         HTTP API path: /api/v1/fleet/push-task-res
