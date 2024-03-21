@@ -2,6 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
+from flwr.proto import minio_pb2 as flwr_dot_proto_dot_minio__pb2
 from flwr.proto import transport_pb2 as flwr_dot_proto_dot_transport__pb2
 
 
@@ -21,8 +22,8 @@ class FlowerServiceStub(object):
                 )
         self.JoinMinIO = channel.stream_stream(
                 '/flwr.proto.FlowerService/JoinMinIO',
-                request_serializer=flwr_dot_proto_dot_transport__pb2.MessageMinIO.SerializeToString,
-                response_deserializer=flwr_dot_proto_dot_transport__pb2.MessageMinIO.FromString,
+                request_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+                response_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
                 )
 
 
@@ -51,8 +52,8 @@ def add_FlowerServiceServicer_to_server(servicer, server):
             ),
             'JoinMinIO': grpc.stream_stream_rpc_method_handler(
                     servicer.JoinMinIO,
-                    request_deserializer=flwr_dot_proto_dot_transport__pb2.MessageMinIO.FromString,
-                    response_serializer=flwr_dot_proto_dot_transport__pb2.MessageMinIO.SerializeToString,
+                    request_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+                    response_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -93,7 +94,7 @@ class FlowerService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.stream_stream(request_iterator, target, '/flwr.proto.FlowerService/JoinMinIO',
-            flwr_dot_proto_dot_transport__pb2.MessageMinIO.SerializeToString,
-            flwr_dot_proto_dot_transport__pb2.MessageMinIO.FromString,
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

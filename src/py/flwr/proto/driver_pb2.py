@@ -12,33 +12,48 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
+from flwr.proto import minio_pb2 as flwr_dot_proto_dot_minio__pb2
 from flwr.proto import node_pb2 as flwr_dot_proto_dot_node__pb2
 from flwr.proto import task_pb2 as flwr_dot_proto_dot_task__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x17\x66lwr/proto/driver.proto\x12\nflwr.proto\x1a\x15\x66lwr/proto/node.proto\x1a\x15\x66lwr/proto/task.proto\"\x12\n\x10\x43reateRunRequest\"#\n\x11\x43reateRunResponse\x12\x0e\n\x06run_id\x18\x01 \x01(\x12\"!\n\x0fGetNodesRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\x12\"3\n\x10GetNodesResponse\x12\x1f\n\x05nodes\x18\x01 \x03(\x0b\x32\x10.flwr.proto.Node\"@\n\x12PushTaskInsRequest\x12*\n\rtask_ins_list\x18\x01 \x03(\x0b\x32\x13.flwr.proto.TaskIns\"\'\n\x13PushTaskInsResponse\x12\x10\n\x08task_ids\x18\x02 \x03(\t\"F\n\x12PullTaskResRequest\x12\x1e\n\x04node\x18\x01 \x01(\x0b\x32\x10.flwr.proto.Node\x12\x10\n\x08task_ids\x18\x02 \x03(\t\"A\n\x13PullTaskResResponse\x12*\n\rtask_res_list\x18\x01 \x03(\x0b\x32\x13.flwr.proto.TaskRes2\xc1\x02\n\x06\x44river\x12J\n\tCreateRun\x12\x1c.flwr.proto.CreateRunRequest\x1a\x1d.flwr.proto.CreateRunResponse\"\x00\x12G\n\x08GetNodes\x12\x1b.flwr.proto.GetNodesRequest\x1a\x1c.flwr.proto.GetNodesResponse\"\x00\x12P\n\x0bPushTaskIns\x12\x1e.flwr.proto.PushTaskInsRequest\x1a\x1f.flwr.proto.PushTaskInsResponse\"\x00\x12P\n\x0bPullTaskRes\x12\x1e.flwr.proto.PullTaskResRequest\x1a\x1f.flwr.proto.PullTaskResResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x17\x66lwr/proto/driver.proto\x12\nflwr.proto\x1a\x16\x66lwr/proto/minio.proto\x1a\x15\x66lwr/proto/node.proto\x1a\x15\x66lwr/proto/task.proto\"5\n\x16\x43reateRunResponseBatch\x12\x1b\n\x13message_batch_bytes\x18\x01 \x01(\x0c\"\x12\n\x10\x43reateRunRequest\"#\n\x11\x43reateRunResponse\x12\x0e\n\x06run_id\x18\x01 \x01(\x12\"3\n\x14GetNodesRequestBatch\x12\x1b\n\x13message_batch_bytes\x18\x01 \x01(\x0c\"4\n\x15GetNodesResponseBatch\x12\x1b\n\x13message_batch_bytes\x18\x01 \x01(\x0c\"!\n\x0fGetNodesRequest\x12\x0e\n\x06run_id\x18\x01 \x01(\x12\"3\n\x10GetNodesResponse\x12\x1f\n\x05nodes\x18\x01 \x03(\x0b\x32\x10.flwr.proto.Node\"6\n\x17PushTaskInsRequestBatch\x12\x1b\n\x13message_batch_bytes\x18\x01 \x01(\x0c\"7\n\x18PushTaskInsResponseBatch\x12\x1b\n\x13message_batch_bytes\x18\x01 \x01(\x0c\"@\n\x12PushTaskInsRequest\x12*\n\rtask_ins_list\x18\x01 \x03(\x0b\x32\x13.flwr.proto.TaskIns\"\'\n\x13PushTaskInsResponse\x12\x10\n\x08task_ids\x18\x02 \x03(\t\"6\n\x17PullTaskResRequestBatch\x12\x1b\n\x13message_batch_bytes\x18\x01 \x01(\x0c\"7\n\x18PullTaskResResponseBatch\x12\x1b\n\x13message_batch_bytes\x18\x01 \x01(\x0c\"F\n\x12PullTaskResRequest\x12\x1e\n\x04node\x18\x01 \x01(\x0b\x32\x10.flwr.proto.Node\x12\x10\n\x08task_ids\x18\x02 \x03(\t\"A\n\x13PullTaskResResponse\x12*\n\rtask_res_list\x18\x01 \x03(\x0b\x32\x13.flwr.proto.TaskRes2\x95\x05\n\x06\x44river\x12Q\n\tCreateRun\x12\x1c.flwr.proto.CreateRunRequest\x1a\".flwr.proto.CreateRunResponseBatch\"\x00\x30\x01\x12\x46\n\x0e\x43reateRunMinIO\x12\x18.flwr.proto.MessageMinIO\x1a\x18.flwr.proto.MessageMinIO\"\x00\x12U\n\x08GetNodes\x12 .flwr.proto.GetNodesRequestBatch\x1a!.flwr.proto.GetNodesResponseBatch\"\x00(\x01\x30\x01\x12\x45\n\rGetNodesMinIO\x12\x18.flwr.proto.MessageMinIO\x1a\x18.flwr.proto.MessageMinIO\"\x00\x12^\n\x0bPushTaskIns\x12#.flwr.proto.PushTaskInsRequestBatch\x1a$.flwr.proto.PushTaskInsResponseBatch\"\x00(\x01\x30\x01\x12H\n\x10PushTaskInsMinIO\x12\x18.flwr.proto.MessageMinIO\x1a\x18.flwr.proto.MessageMinIO\"\x00\x12^\n\x0bPullTaskRes\x12#.flwr.proto.PullTaskResRequestBatch\x1a$.flwr.proto.PullTaskResResponseBatch\"\x00(\x01\x30\x01\x12H\n\x10PullTaskResMinIO\x12\x18.flwr.proto.MessageMinIO\x1a\x18.flwr.proto.MessageMinIO\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'flwr.proto.driver_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
-  _globals['_CREATERUNREQUEST']._serialized_start=85
-  _globals['_CREATERUNREQUEST']._serialized_end=103
-  _globals['_CREATERUNRESPONSE']._serialized_start=105
-  _globals['_CREATERUNRESPONSE']._serialized_end=140
-  _globals['_GETNODESREQUEST']._serialized_start=142
-  _globals['_GETNODESREQUEST']._serialized_end=175
-  _globals['_GETNODESRESPONSE']._serialized_start=177
-  _globals['_GETNODESRESPONSE']._serialized_end=228
-  _globals['_PUSHTASKINSREQUEST']._serialized_start=230
-  _globals['_PUSHTASKINSREQUEST']._serialized_end=294
-  _globals['_PUSHTASKINSRESPONSE']._serialized_start=296
-  _globals['_PUSHTASKINSRESPONSE']._serialized_end=335
-  _globals['_PULLTASKRESREQUEST']._serialized_start=337
-  _globals['_PULLTASKRESREQUEST']._serialized_end=407
-  _globals['_PULLTASKRESRESPONSE']._serialized_start=409
-  _globals['_PULLTASKRESRESPONSE']._serialized_end=474
-  _globals['_DRIVER']._serialized_start=477
-  _globals['_DRIVER']._serialized_end=798
+  _globals['_CREATERUNRESPONSEBATCH']._serialized_start=109
+  _globals['_CREATERUNRESPONSEBATCH']._serialized_end=162
+  _globals['_CREATERUNREQUEST']._serialized_start=164
+  _globals['_CREATERUNREQUEST']._serialized_end=182
+  _globals['_CREATERUNRESPONSE']._serialized_start=184
+  _globals['_CREATERUNRESPONSE']._serialized_end=219
+  _globals['_GETNODESREQUESTBATCH']._serialized_start=221
+  _globals['_GETNODESREQUESTBATCH']._serialized_end=272
+  _globals['_GETNODESRESPONSEBATCH']._serialized_start=274
+  _globals['_GETNODESRESPONSEBATCH']._serialized_end=326
+  _globals['_GETNODESREQUEST']._serialized_start=328
+  _globals['_GETNODESREQUEST']._serialized_end=361
+  _globals['_GETNODESRESPONSE']._serialized_start=363
+  _globals['_GETNODESRESPONSE']._serialized_end=414
+  _globals['_PUSHTASKINSREQUESTBATCH']._serialized_start=416
+  _globals['_PUSHTASKINSREQUESTBATCH']._serialized_end=470
+  _globals['_PUSHTASKINSRESPONSEBATCH']._serialized_start=472
+  _globals['_PUSHTASKINSRESPONSEBATCH']._serialized_end=527
+  _globals['_PUSHTASKINSREQUEST']._serialized_start=529
+  _globals['_PUSHTASKINSREQUEST']._serialized_end=593
+  _globals['_PUSHTASKINSRESPONSE']._serialized_start=595
+  _globals['_PUSHTASKINSRESPONSE']._serialized_end=634
+  _globals['_PULLTASKRESREQUESTBATCH']._serialized_start=636
+  _globals['_PULLTASKRESREQUESTBATCH']._serialized_end=690
+  _globals['_PULLTASKRESRESPONSEBATCH']._serialized_start=692
+  _globals['_PULLTASKRESRESPONSEBATCH']._serialized_end=747
+  _globals['_PULLTASKRESREQUEST']._serialized_start=749
+  _globals['_PULLTASKRESREQUEST']._serialized_end=819
+  _globals['_PULLTASKRESRESPONSE']._serialized_start=821
+  _globals['_PULLTASKRESRESPONSE']._serialized_end=886
+  _globals['_DRIVER']._serialized_start=889
+  _globals['_DRIVER']._serialized_end=1550
 # @@protoc_insertion_point(module_scope)

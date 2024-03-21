@@ -4,6 +4,7 @@ import flwr as fl
 import numpy as np
 
 from flwr.common import ConfigsRecord
+from flwr.common.constant import TRANSPORT_TYPE_GRPC_RERE
 from flwr.server.server_config import CommunicationType
 
 SUBSET_SIZE = 1000
@@ -49,7 +50,8 @@ if __name__ == "__main__":
     fl.client.start_client(
         server_address="localhost:8080",
         client=FlowerClient().to_client(),
-        communication_type=CommunicationType.MINIO,
+        communication_type=CommunicationType.GRPC,
+        grpc_max_message_length=4,
         minio_url="localhost:9000",
         minio_access_key="KiCzggMrhevUXL7qEBaX",
         minio_secret_key="LmFrozQ4eRAnBcjzPRAjr77HAa7Bz3YYVmkv72MT",

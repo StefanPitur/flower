@@ -17,6 +17,8 @@ syntax = "proto3";
 
 package flwr.proto;
 
+import "flwr/proto/minio.proto";
+
 service FlowerService {
   rpc Join(stream ClientMessageChunk) returns (stream ServerMessageChunk) {}
   rpc JoinMinIO(stream MessageMinIO) returns (stream MessageMinIO) {}
@@ -45,13 +47,8 @@ enum Reason {
   ACK = 4;
 }
 
-message MessageMinIO {
-  string bucket_name = 1;
-  string source_file = 2;
-}
-
 message ServerMessageChunk {
-  bytes server_message_chunk = 1;
+  bytes message_batch_bytes = 1;
 }
 
 message ServerMessage {
@@ -76,7 +73,7 @@ message ServerMessage {
 }
 
 message ClientMessageChunk {
-  bytes client_message_chunk = 1;
+  bytes message_batch_bytes = 1;
 }
 
 message ClientMessage {

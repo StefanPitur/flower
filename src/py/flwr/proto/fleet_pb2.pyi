@@ -13,8 +13,19 @@ import typing_extensions
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-class CreateNodeRequest(google.protobuf.message.Message):
+class CreateNodeResponseBatch(google.protobuf.message.Message):
     """CreateNode messages"""
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
+    def __init__(self,
+        *,
+        message_batch_bytes: builtins.bytes = ...,
+        ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
+global___CreateNodeResponseBatch = CreateNodeResponseBatch
+
+class CreateNodeRequest(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
     def __init__(self,
         ) -> None: ...
@@ -33,8 +44,19 @@ class CreateNodeResponse(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["node",b"node"]) -> None: ...
 global___CreateNodeResponse = CreateNodeResponse
 
-class DeleteNodeRequest(google.protobuf.message.Message):
+class DeleteNodeRequestBatch(google.protobuf.message.Message):
     """DeleteNode messages"""
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
+    def __init__(self,
+        *,
+        message_batch_bytes: builtins.bytes = ...,
+        ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
+global___DeleteNodeRequestBatch = DeleteNodeRequestBatch
+
+class DeleteNodeRequest(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
     NODE_FIELD_NUMBER: builtins.int
     @property
@@ -53,8 +75,30 @@ class DeleteNodeResponse(google.protobuf.message.Message):
         ) -> None: ...
 global___DeleteNodeResponse = DeleteNodeResponse
 
-class PullTaskInsRequest(google.protobuf.message.Message):
+class PullTaskInsRequestBatch(google.protobuf.message.Message):
     """PullTaskIns messages"""
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
+    def __init__(self,
+        *,
+        message_batch_bytes: builtins.bytes = ...,
+        ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
+global___PullTaskInsRequestBatch = PullTaskInsRequestBatch
+
+class PullTaskInsResponseBatch(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
+    def __init__(self,
+        *,
+        message_batch_bytes: builtins.bytes = ...,
+        ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
+global___PullTaskInsResponseBatch = PullTaskInsResponseBatch
+
+class PullTaskInsRequest(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
     NODE_FIELD_NUMBER: builtins.int
     TASK_IDS_FIELD_NUMBER: builtins.int
@@ -88,8 +132,30 @@ class PullTaskInsResponse(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["reconnect",b"reconnect","task_ins_list",b"task_ins_list"]) -> None: ...
 global___PullTaskInsResponse = PullTaskInsResponse
 
-class PushTaskResRequest(google.protobuf.message.Message):
+class PushTaskResRequestBatch(google.protobuf.message.Message):
     """PushTaskRes messages"""
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
+    def __init__(self,
+        *,
+        message_batch_bytes: builtins.bytes = ...,
+        ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
+global___PushTaskResRequestBatch = PushTaskResRequestBatch
+
+class PushTaskResResponseBatch(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
+    def __init__(self,
+        *,
+        message_batch_bytes: builtins.bytes = ...,
+        ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
+global___PushTaskResResponseBatch = PushTaskResResponseBatch
+
+class PushTaskResRequest(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
     TASK_RES_LIST_FIELD_NUMBER: builtins.int
     @property
