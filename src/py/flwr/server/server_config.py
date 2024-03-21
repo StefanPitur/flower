@@ -14,9 +14,14 @@
 # ==============================================================================
 """Flower ServerConfig."""
 
-
+from enum import Enum
 from dataclasses import dataclass
 from typing import Optional
+
+
+class CommunicationType(Enum):
+    GRPC = 0
+    MINIO = 1
 
 
 @dataclass

@@ -28,18 +28,30 @@ from flwr.common import recordset_compat as compat
 from flwr.common.constant import MESSAGE_TYPE_GET_PROPERTIES
 from flwr.common.typing import Code, GetPropertiesRes, Status
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
-    ClientMessage,
-    ServerMessage,
+    ServerMessage, ClientMessageChunk, ServerMessageChunk,
 )
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.superlink.fleet.grpc_bidi.grpc_server import start_grpc_server
 
 from .connection import grpc_connection
+from ...common.server_message_batching import batch_server_message
+from ...common.client_message_batching import get_client_message_from_batches
+from ...server.server_config import CommunicationType
 
 EXPECTED_NUM_SERVER_MESSAGE = 10
 
 SERVER_MESSAGE = ServerMessage(get_properties_ins=ServerMessage.GetPropertiesIns())
 SERVER_MESSAGE_RECONNECT = ServerMessage(reconnect_ins=ServerMessage.ReconnectIns())
+
+SERVER_MESSAGE_CHUNKS = batch_server_message(
+    server_message=SERVER_MESSAGE,
+    chunk_size=4
+)
+
+SERVER_MESSAGE_CHUNKS_RECONNECT = batch_server_message(
+    server_message=SERVER_MESSAGE_RECONNECT,
+    chunk_size=4
+)
 
 MESSAGE_GET_PROPERTIES = Message(
     metadata=Metadata(
@@ -81,9 +93,9 @@ def unused_tcp_port() -> int:
 
 def mock_join(  # type: ignore # pylint: disable=invalid-name
     _self,
-    request_iterator: Iterator[ClientMessage],
+    request_iterator: Iterator[ClientMessageChunk],
     _context: grpc.ServicerContext,
-) -> Iterator[ServerMessage]:
+) -> Iterator[ServerMessageChunk]:
     """Serve as mock for the Join method of class FlowerServiceServicer."""
     counter = 0
 
@@ -91,12 +103,14 @@ def mock_join(  # type: ignore # pylint: disable=invalid-name
         counter += 1
 
         if counter < EXPECTED_NUM_SERVER_MESSAGE:
-            yield SERVER_MESSAGE
+            for server_message_chunk in SERVER_MESSAGE_CHUNKS:
+                yield server_message_chunk
         else:
-            yield SERVER_MESSAGE_RECONNECT
+            for server_message_reconnect_chunk in SERVER_MESSAGE_CHUNKS_RECONNECT:
+                yield server_message_reconnect_chunk
 
         try:
-            client_message = next(request_iterator)
+            client_message = get_client_message_from_batches(request_iterator)
             if client_message.HasField("disconnect_res"):
                 break
         except StopIteration:
@@ -127,7 +141,12 @@ def test_integration_connection() -> None:
     def run_client() -> int:
         messages_received: int = 0
 
-        with grpc_connection(server_address=f"[::]:{port}", insecure=True) as conn:
+        with grpc_connection(
+                server_address=f"[::]:{port}",
+                insecure=True,
+                communication_type=CommunicationType.GRPC,
+                max_message_length=4
+        ) as conn:
             receive, send, _, _ = conn
 
             # Setup processing loop

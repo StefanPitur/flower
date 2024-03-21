@@ -19,6 +19,7 @@ package flwr.proto;
 
 service FlowerService {
   rpc Join(stream ClientMessageChunk) returns (stream ServerMessageChunk) {}
+  rpc JoinMinIO(stream MessageMinIO) returns (stream MessageMinIO) {}
 }
 
 enum Code {
@@ -44,10 +45,13 @@ enum Reason {
   ACK = 4;
 }
 
+message MessageMinIO {
+  string bucket_name = 1;
+  string source_file = 2;
+}
+
 message ServerMessageChunk {
-  int64 batch_number = 1;
-  int64 num_batches = 2;
-  bytes server_message_chunk = 3;
+  bytes server_message_chunk = 1;
 }
 
 message ServerMessage {
@@ -72,9 +76,7 @@ message ServerMessage {
 }
 
 message ClientMessageChunk {
-  int64 batch_number = 1;
-  int64 num_batches = 2;
-  bytes client_message_chunk = 3;
+  bytes client_message_chunk = 1;
 }
 
 message ClientMessage {

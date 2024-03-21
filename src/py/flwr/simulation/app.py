@@ -161,6 +161,7 @@ def start_simulation(
     hist : flwr.server.history.History
         Object containing metrics from training.
     """  # noqa: E501
+
     # pylint: disable-msg=too-many-locals
     event(
         EventType.START_SIMULATION_ENTER,
@@ -292,6 +293,7 @@ def start_simulation(
         pool.num_actors,
     )
 
+    # Poate si aici este de interes de vazut cum este gRPC-ul implementat
     # Register one RayClientProxy object for each client with the ClientManager
     for cid in cids:
         client_proxy = RayActorClientProxy(

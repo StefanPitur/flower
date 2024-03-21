@@ -38,7 +38,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.strategy import FedAvg, Strategy
 
-from .server_config import ServerConfig
+from .server_config import ServerConfig, CommunicationType
 from .superlink.fleet.grpc_bidi.grpc_client_proxy import GrpcClientProxy
 
 FitResultsAndFailures = Tuple[
@@ -281,7 +281,7 @@ class Server:
 
         # Get initial parameters from one of the clients
         log(INFO, "Requesting initial parameters from one random client")
-        random_client: GrpcClientProxy = self._client_manager.sample(1)[0]
+        random_client: ClientProxy = self._client_manager.sample(1)[0]
         ins = GetParametersIns(config={})
         get_parameters_res = random_client.get_parameters(
             ins=ins, timeout=timeout, group_id=server_round
@@ -463,6 +463,10 @@ def init_defaults(
     client_manager: Optional[ClientManager],
 ) -> Tuple[Server, ServerConfig]:
     """Create server instance if none was given."""
+    # Set default config values
+    if config is None:
+        config = ServerConfig()
+
     if server is None:
         if client_manager is None:
             client_manager = SimpleClientManager()
@@ -471,11 +475,6 @@ def init_defaults(
         server = Server(client_manager=client_manager, strategy=strategy)
     elif strategy is not None:
         log(WARN, "Both server and strategy were provided, ignoring strategy")
-
-    # Set default config values
-    if config is None:
-        config = ServerConfig()
-
     return server, config
 
 

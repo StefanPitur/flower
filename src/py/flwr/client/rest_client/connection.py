@@ -21,6 +21,8 @@ from copy import copy
 from logging import ERROR, INFO, WARN
 from typing import Callable, Dict, Iterator, Optional, Tuple, Union, cast
 
+from minio import Minio
+
 from flwr.client.message_handler.message_handler import validate_out_message
 from flwr.client.message_handler.task_handler import get_task_ins, validate_task_ins
 from flwr.common import GRPC_MAX_MESSAGE_LENGTH
@@ -39,6 +41,7 @@ from flwr.proto.fleet_pb2 import (  # pylint: disable=E0611
 )
 from flwr.proto.node_pb2 import Node  # pylint: disable=E0611
 from flwr.proto.task_pb2 import TaskIns  # pylint: disable=E0611
+from flwr.server.server_config import CommunicationType
 
 try:
     import requests
@@ -65,6 +68,9 @@ def http_request_response(
     root_certificates: Optional[
         Union[bytes, str]
     ] = None,  # pylint: disable=unused-argument
+    communication_type: CommunicationType = CommunicationType.GRPC,  # pylint: disable=unused-argument
+    minio_client: Optional[Minio] = None,  # pylint: disable=unused-argument
+    minio_bucket_name: Optional[str] = None,  # pylint: disable=unused-argument
 ) -> Iterator[
     Tuple[
         Callable[[], Optional[Message]],
@@ -90,6 +96,12 @@ def http_request_response(
         Path of the root certificate. If provided, a secure
         connection using the certificates will be established to an SSL-enabled
         Flower server. Bytes won't work for the REST API.
+    communication_type : CommunicationType
+        Ignored, only present to preserve API-compatibility
+    minio_client : Optional[Minio] (default: None)
+        Ignored, only present to preserve API-compatibility
+    minio_bucket_name : Optional[str] (default: None)
+        Ignored, only present to preserve API-compatibility
 
     Returns
     -------

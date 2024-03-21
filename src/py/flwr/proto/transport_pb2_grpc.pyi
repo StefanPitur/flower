@@ -13,6 +13,10 @@ class FlowerServiceStub:
         flwr.proto.transport_pb2.ClientMessageChunk,
         flwr.proto.transport_pb2.ServerMessageChunk]
 
+    JoinMinIO: grpc.StreamStreamMultiCallable[
+        flwr.proto.transport_pb2.MessageMinIO,
+        flwr.proto.transport_pb2.MessageMinIO]
+
 
 class FlowerServiceServicer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -20,6 +24,12 @@ class FlowerServiceServicer(metaclass=abc.ABCMeta):
         request_iterator: typing.Iterator[flwr.proto.transport_pb2.ClientMessageChunk],
         context: grpc.ServicerContext,
     ) -> typing.Iterator[flwr.proto.transport_pb2.ServerMessageChunk]: ...
+
+    @abc.abstractmethod
+    def JoinMinIO(self,
+        request_iterator: typing.Iterator[flwr.proto.transport_pb2.MessageMinIO],
+        context: grpc.ServicerContext,
+    ) -> typing.Iterator[flwr.proto.transport_pb2.MessageMinIO]: ...
 
 
 def add_FlowerServiceServicer_to_server(servicer: FlowerServiceServicer, server: grpc.Server) -> None: ...

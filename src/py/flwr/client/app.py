@@ -18,9 +18,12 @@
 import argparse
 import sys
 import time
+from functools import partial
 from logging import DEBUG, INFO, WARN
 from pathlib import Path
-from typing import Callable, ContextManager, Optional, Tuple, Union
+from typing import Callable, ContextManager, Optional, Tuple, Union, Awaitable
+
+from minio import Minio
 
 from flwr.client.client import Client
 from flwr.client.client_app import ClientApp
@@ -43,6 +46,8 @@ from .grpc_rere_client.connection import grpc_request_response
 from .message_handler.message_handler import handle_control_message
 from .node_state import NodeState
 from .numpy_client import NumPyClient
+from ..minio.utils import create_minio_client
+from ..server.server_config import CommunicationType
 
 
 def run_client_app() -> None:
@@ -180,6 +185,11 @@ def start_client(
     root_certificates: Optional[Union[bytes, str]] = None,
     insecure: Optional[bool] = None,
     transport: Optional[str] = None,
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    minio_url: Optional[str] = None,
+    minio_access_key: Optional[str] = None,
+    minio_secret_key: Optional[str] = None,
+    minio_bucket_name: Optional[str] = None
 ) -> None:
     """Start a Flower client node which connects to a Flower server.
 
@@ -245,6 +255,18 @@ def start_client(
     >>> )
     """
     event(EventType.START_CLIENT_ENTER)
+
+    minio_client = None
+    if communication_type == CommunicationType.MINIO:
+        if minio_bucket_name is None:
+            raise ValueError("When using MINIO communication type, you must specify a minio bucket to be used")
+
+        minio_client = create_minio_client(
+            minio_url=minio_url,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key
+        )
+
     _start_client_internal(
         server_address=server_address,
         load_client_app_fn=None,
@@ -254,6 +276,9 @@ def start_client(
         root_certificates=root_certificates,
         insecure=insecure,
         transport=transport,
+        communication_type=communication_type,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
     )
     event(EventType.START_CLIENT_LEAVE)
 
@@ -265,6 +290,7 @@ def start_client(
 def _start_client_internal(
     *,
     server_address: str,
+    communication_type: CommunicationType,
     load_client_app_fn: Optional[Callable[[], ClientApp]] = None,
     client_fn: Optional[ClientFn] = None,
     client: Optional[Client] = None,
@@ -272,6 +298,8 @@ def _start_client_internal(
     root_certificates: Optional[Union[bytes, str]] = None,
     insecure: Optional[bool] = None,
     transport: Optional[str] = None,
+    minio_client: Optional[Minio] = None,
+    minio_bucket_name: Optional[str] = None,
 ) -> None:
     """Start a Flower client node which connects to a Flower server.
 
@@ -338,7 +366,10 @@ def _start_client_internal(
     # Both `client` and `client_fn` must not be used directly
 
     # Initialize connection context manager
-    connection, address = _init_connection(transport, server_address)
+    connection, address = _init_connection(
+        transport=transport,
+        server_address=server_address,
+    )
 
     node_state = NodeState()
 
@@ -349,6 +380,9 @@ def _start_client_internal(
             insecure,
             grpc_max_message_length,
             root_certificates,
+            communication_type,
+            minio_client,
+            minio_bucket_name
         ) as conn:
             receive, send, create_node, delete_node = conn
 
@@ -414,6 +448,11 @@ def start_numpy_client(
     root_certificates: Optional[bytes] = None,
     insecure: Optional[bool] = None,
     transport: Optional[str] = None,
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    minio_url: Optional[str] = None,
+    minio_access_key: Optional[str] = None,
+    minio_secret_key: Optional[str] = None,
+    minio_bucket_name: Optional[str] = None
 ) -> None:
     """Start a Flower NumPyClient which connects to a gRPC server.
 
@@ -504,12 +543,20 @@ def start_numpy_client(
         root_certificates=root_certificates,
         insecure=insecure,
         transport=transport,
+        communication_type=communication_type,
+        minio_url=minio_url,
+        minio_access_key=minio_access_key,
+        minio_secret_key=minio_secret_key,
+        minio_bucket_name=minio_bucket_name
     )
 
 
-def _init_connection(transport: Optional[str], server_address: str) -> Tuple[
+def _init_connection(
+        transport: Optional[str],
+        server_address: str,
+) -> Tuple[
     Callable[
-        [str, bool, int, Union[bytes, str, None]],
+        [str, bool, int, Union[bytes, str, None], CommunicationType, Union[Minio, None], Union[str, None]],
         ContextManager[
             Tuple[
                 Callable[[], Optional[Message]],

@@ -19,17 +19,18 @@ Relevant knowledge for reading this modules code:
 """
 
 import uuid
-from typing import Callable, Iterator
+from typing import Callable, Iterator, Optional
 
 import grpc
 from iterators import TimeoutIterator
+from minio import Minio
 
-from flwr.common.client_message_batching import get_client_message_from_batches
-from flwr.common.server_message_batching import batch_server_message
+from flwr.common.client_message_batching import get_client_message_from_batches, get_client_message_from_minio
+from flwr.common.server_message_batching import batch_server_message, push_server_message_to_minio
 from flwr.proto import transport_pb2_grpc  # pylint: disable=E0611
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ServerMessageChunk,
-    ClientMessageChunk
+    ClientMessageChunk, MessageMinIO
 )
 from flwr.server.client_manager import ClientManager
 from flwr.server.superlink.fleet.grpc_bidi.grpc_bridge import (
@@ -78,11 +79,15 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
         grpc_client_proxy_factory: Callable[
             [str, GrpcBridge], GrpcClientProxy
         ] = default_grpc_client_proxy_factory,
+        minio_client: Optional[Minio] = None,
+        minio_bucket_name: Optional[str] = None,
     ) -> None:
         self.max_message_length = max_message_length
         self.client_manager: ClientManager = client_manager
         self.grpc_bridge_factory = grpc_bridge_factory
         self.client_proxy_factory = grpc_client_proxy_factory
+        self.minio_client = minio_client
+        self.minio_bucket_name = minio_bucket_name
 
     def Join(  # pylint: disable=invalid-name
         self,
@@ -155,5 +160,48 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
                     bridge.set_res_wrapper(
                         res_wrapper=ResWrapper(client_message=client_message)
                     )
+                except StopIteration:
+                    break
+
+    def JoinMinIO(
+        self,
+        request_iterator: Iterator[MessageMinIO],
+        context: grpc.ServicerContext,
+    ) -> Iterator[MessageMinIO]:
+        cid: str = uuid.uuid4().hex
+        bridge = self.grpc_bridge_factory()
+        client_proxy = self.client_proxy_factory(cid, bridge)
+        is_success = register_client_proxy(self.client_manager, client_proxy, context)
+
+        if is_success:
+            message_minio_iterator = TimeoutIterator(
+                iterator=request_iterator, reset_on_next=True
+            )
+            ins_wrapper_iterator = bridge.ins_wrapper_iterator()
+
+            while True:
+                try:
+                    # Get ins_wrapper from bridge and yield server_message
+                    ins_wrapper: InsWrapper = next(ins_wrapper_iterator)
+                    server_message = ins_wrapper.server_message
+
+                    server_message_minio = push_server_message_to_minio(
+                        minio_client=self.minio_client,
+                        bucket_name=self.minio_bucket_name,
+                        server_message=server_message
+                    )
+                    yield server_message_minio
+
+                    # Set current timeout, might be None
+                    if ins_wrapper.timeout is not None:
+                        message_minio_iterator.set_timeout(ins_wrapper.timeout)
+
+                    # Wait for client message
+                    client_message = get_client_message_from_minio(
+                        minio_client=self.minio_client,
+                        client_message_minio_iterator=message_minio_iterator
+                    )
+                    bridge.set_res_wrapper(res_wrapper=ResWrapper(client_message=client_message))
+
                 except StopIteration:
                     break

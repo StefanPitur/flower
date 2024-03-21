@@ -21,6 +21,7 @@ from logging import ERROR
 from typing import Any, Callable, Optional, Tuple, Union
 
 import grpc
+from minio import Minio
 
 from flwr.common import GRPC_MAX_MESSAGE_LENGTH
 from flwr.common.logger import log
@@ -28,6 +29,7 @@ from flwr.proto.transport_pb2_grpc import (  # pylint: disable=E0611
     add_FlowerServiceServicer_to_server,
 )
 from flwr.server.client_manager import ClientManager
+from flwr.server.server_config import CommunicationType
 from flwr.server.superlink.driver.driver_servicer import DriverServicer
 from flwr.server.superlink.fleet.grpc_bidi.flower_service_servicer import (
     FlowerServiceServicer,
@@ -55,6 +57,8 @@ def valid_certificates(certificates: Tuple[bytes, bytes, bytes]) -> bool:
     return is_valid
 
 
+
+# Look here
 def start_grpc_server(  # pylint: disable=too-many-arguments
     client_manager: ClientManager,
     server_address: str,
@@ -62,6 +66,8 @@ def start_grpc_server(  # pylint: disable=too-many-arguments
     max_message_length: int = GRPC_MAX_MESSAGE_LENGTH,
     keepalive_time_ms: int = 210000,
     certificates: Optional[Tuple[bytes, bytes, bytes]] = None,
+    minio_client: Optional[Minio] = None,
+    minio_bucket_name: Optional[str] = None,
 ) -> grpc.Server:
     """Create and start a gRPC server running FlowerServiceServicer.
 
@@ -113,6 +119,11 @@ def start_grpc_server(  # pylint: disable=too-many-arguments
             * CA certificate.
             * server certificate.
             * server private key.
+    minio_client : Optional[Minio] (default: None)
+        The minio client is used to communicate with the MinIO instance in order to
+        fetch/send the instructions to and from clients
+    minio_bucket_name : Optional[Minio] (default: None)
+        The minio bucket where the data is to be stored to/fetched from.
 
     Returns
     -------
@@ -134,7 +145,12 @@ def start_grpc_server(  # pylint: disable=too-many-arguments
     >>>     ),
     >>> )
     """
-    servicer = FlowerServiceServicer(max_message_length, client_manager)
+    servicer = FlowerServiceServicer(
+        max_message_length=max_message_length,
+        client_manager=client_manager,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
+    )
     add_servicer_to_server_fn = add_FlowerServiceServicer_to_server
 
     server = generic_create_grpc_server(

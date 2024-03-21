@@ -83,21 +83,29 @@ class Parameters(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["tensor_type",b"tensor_type","tensors",b"tensors"]) -> None: ...
 global___Parameters = Parameters
 
+class MessageMinIO(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    BUCKET_NAME_FIELD_NUMBER: builtins.int
+    SOURCE_FILE_FIELD_NUMBER: builtins.int
+    bucket_name: typing.Text
+    source_file: typing.Text
+    def __init__(self,
+        *,
+        bucket_name: typing.Text = ...,
+        source_file: typing.Text = ...,
+        ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["bucket_name",b"bucket_name","source_file",b"source_file"]) -> None: ...
+global___MessageMinIO = MessageMinIO
+
 class ServerMessageChunk(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
-    BATCH_NUMBER_FIELD_NUMBER: builtins.int
-    NUM_BATCHES_FIELD_NUMBER: builtins.int
     SERVER_MESSAGE_CHUNK_FIELD_NUMBER: builtins.int
-    batch_number: builtins.int
-    num_batches: builtins.int
     server_message_chunk: builtins.bytes
     def __init__(self,
         *,
-        batch_number: builtins.int = ...,
-        num_batches: builtins.int = ...,
         server_message_chunk: builtins.bytes = ...,
         ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["batch_number",b"batch_number","num_batches",b"num_batches","server_message_chunk",b"server_message_chunk"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["server_message_chunk",b"server_message_chunk"]) -> None: ...
 global___ServerMessageChunk = ServerMessageChunk
 
 class ServerMessage(google.protobuf.message.Message):
@@ -256,19 +264,13 @@ global___ServerMessage = ServerMessage
 
 class ClientMessageChunk(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
-    BATCH_NUMBER_FIELD_NUMBER: builtins.int
-    NUM_BATCHES_FIELD_NUMBER: builtins.int
     CLIENT_MESSAGE_CHUNK_FIELD_NUMBER: builtins.int
-    batch_number: builtins.int
-    num_batches: builtins.int
     client_message_chunk: builtins.bytes
     def __init__(self,
         *,
-        batch_number: builtins.int = ...,
-        num_batches: builtins.int = ...,
         client_message_chunk: builtins.bytes = ...,
         ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["batch_number",b"batch_number","client_message_chunk",b"client_message_chunk","num_batches",b"num_batches"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["client_message_chunk",b"client_message_chunk"]) -> None: ...
 global___ClientMessageChunk = ClientMessageChunk
 
 class ClientMessage(google.protobuf.message.Message):
@@ -405,22 +407,11 @@ class ClientMessage(google.protobuf.message.Message):
         def HasField(self, field_name: typing_extensions.Literal["status",b"status"]) -> builtins.bool: ...
         def ClearField(self, field_name: typing_extensions.Literal["loss",b"loss","metrics",b"metrics","num_examples",b"num_examples","status",b"status"]) -> None: ...
 
-    class StefanRes(google.protobuf.message.Message):
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
-        TEXT_FIELD_NUMBER: builtins.int
-        text: typing.Text
-        def __init__(self,
-            *,
-            text: typing.Text = ...,
-            ) -> None: ...
-        def ClearField(self, field_name: typing_extensions.Literal["text",b"text"]) -> None: ...
-
     DISCONNECT_RES_FIELD_NUMBER: builtins.int
     GET_PROPERTIES_RES_FIELD_NUMBER: builtins.int
     GET_PARAMETERS_RES_FIELD_NUMBER: builtins.int
     FIT_RES_FIELD_NUMBER: builtins.int
     EVALUATE_RES_FIELD_NUMBER: builtins.int
-    STEFAN_TEXT_FIELD_NUMBER: builtins.int
     @property
     def disconnect_res(self) -> global___ClientMessage.DisconnectRes: ...
     @property
@@ -431,8 +422,6 @@ class ClientMessage(google.protobuf.message.Message):
     def fit_res(self) -> global___ClientMessage.FitRes: ...
     @property
     def evaluate_res(self) -> global___ClientMessage.EvaluateRes: ...
-    @property
-    def stefan_text(self) -> global___ClientMessage.StefanRes: ...
     def __init__(self,
         *,
         disconnect_res: typing.Optional[global___ClientMessage.DisconnectRes] = ...,
@@ -440,11 +429,10 @@ class ClientMessage(google.protobuf.message.Message):
         get_parameters_res: typing.Optional[global___ClientMessage.GetParametersRes] = ...,
         fit_res: typing.Optional[global___ClientMessage.FitRes] = ...,
         evaluate_res: typing.Optional[global___ClientMessage.EvaluateRes] = ...,
-        stefan_text: typing.Optional[global___ClientMessage.StefanRes] = ...,
         ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["disconnect_res",b"disconnect_res","evaluate_res",b"evaluate_res","fit_res",b"fit_res","get_parameters_res",b"get_parameters_res","get_properties_res",b"get_properties_res","msg",b"msg","stefan_text",b"stefan_text"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["disconnect_res",b"disconnect_res","evaluate_res",b"evaluate_res","fit_res",b"fit_res","get_parameters_res",b"get_parameters_res","get_properties_res",b"get_properties_res","msg",b"msg","stefan_text",b"stefan_text"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["msg",b"msg"]) -> typing.Optional[typing_extensions.Literal["disconnect_res","get_properties_res","get_parameters_res","fit_res","evaluate_res","stefan_text"]]: ...
+    def HasField(self, field_name: typing_extensions.Literal["disconnect_res",b"disconnect_res","evaluate_res",b"evaluate_res","fit_res",b"fit_res","get_parameters_res",b"get_parameters_res","get_properties_res",b"get_properties_res","msg",b"msg"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["disconnect_res",b"disconnect_res","evaluate_res",b"evaluate_res","fit_res",b"fit_res","get_parameters_res",b"get_parameters_res","get_properties_res",b"get_properties_res","msg",b"msg"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["msg",b"msg"]) -> typing.Optional[typing_extensions.Literal["disconnect_res","get_properties_res","get_parameters_res","fit_res","evaluate_res"]]: ...
 global___ClientMessage = ClientMessage
 
 class Scalar(google.protobuf.message.Message):
