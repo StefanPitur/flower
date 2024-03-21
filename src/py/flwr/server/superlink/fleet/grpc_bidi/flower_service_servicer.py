@@ -25,10 +25,9 @@ import grpc
 from iterators import TimeoutIterator
 from minio import Minio
 
-from flwr.common.client_message_batching import get_client_message_from_minio
 from flwr.common.constant import SERVER_MESSAGE_BATCH_HEADER_SIZE
 from flwr.common.grpc_message_batching import get_message_from_batches, batch_grpc_message
-from flwr.common.server_message_batching import push_server_message_to_minio
+from flwr.minio.minio_grpc_message import get_message_from_minio, push_message_to_minio
 from flwr.proto import transport_pb2_grpc  # pylint: disable=E0611
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ServerMessageChunk,
@@ -192,10 +191,12 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
                     ins_wrapper: InsWrapper = next(ins_wrapper_iterator)
                     server_message = ins_wrapper.server_message
 
-                    server_message_minio = push_server_message_to_minio(
+                    server_message_minio = push_message_to_minio(
                         minio_client=self.minio_client,
                         bucket_name=self.minio_bucket_name,
-                        server_message=server_message
+                        source_file=str(uuid.uuid4()),
+                        message=server_message,
+                        minio_message_type=MessageMinIO
                     )
                     yield server_message_minio
 
@@ -203,10 +204,10 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
                     if ins_wrapper.timeout is not None:
                         message_minio_iterator.set_timeout(ins_wrapper.timeout)
 
-                    # Wait for client message
-                    client_message = get_client_message_from_minio(
+                    client_message = get_message_from_minio(
                         minio_client=self.minio_client,
-                        client_message_minio_iterator=message_minio_iterator
+                        minio_message_iterator=message_minio_iterator,
+                        message_type=ClientMessage
                     )
                     bridge.set_res_wrapper(res_wrapper=ResWrapper(client_message=client_message))
 

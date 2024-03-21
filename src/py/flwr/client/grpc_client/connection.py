@@ -33,7 +33,6 @@ from flwr.common import (
 )
 from flwr.common import recordset_compat as compat
 from flwr.common import serde
-from flwr.common.client_message_batching import push_client_message_to_minio
 from flwr.common.constant import (
     MESSAGE_TYPE_EVALUATE,
     MESSAGE_TYPE_FIT,
@@ -43,7 +42,7 @@ from flwr.common.constant import (
 from flwr.common.grpc import create_channel
 from flwr.common.grpc_message_batching import batch_grpc_message, get_message_from_batches
 from flwr.common.logger import log
-from flwr.common.server_message_batching import get_server_message_from_minio
+from flwr.minio.minio_grpc_message import push_message_to_minio, get_message_from_minio
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ClientMessage,
     Reason,
@@ -160,9 +159,10 @@ def grpc_connection(  # pylint: disable=R0915
                 message_type=ServerMessage
             )
         elif communication_type == CommunicationType.MINIO:
-            proto = get_server_message_from_minio(
+            proto = get_message_from_minio(
                 minio_client=minio_client,
-                server_message_minio_iterator=message_minio_iterator
+                minio_message_iterator=message_minio_iterator,
+                message_type=ServerMessage
             )
             print(f"grpc_connection - receive() : {proto}")
         else:
@@ -265,11 +265,12 @@ def grpc_connection(  # pylint: disable=R0915
             for client_message_chunk in client_message_chunks:
                 queue_client_message.put(client_message_chunk, block=False)
         elif communication_type == CommunicationType.MINIO:
-            client_message_minio = push_client_message_to_minio(
+            client_message_minio = push_message_to_minio(
                 minio_client=minio_client,
                 bucket_name=minio_bucket_name,
                 source_file=str(uuid.uuid4()),
-                client_message=msg_proto
+                message=msg_proto,
+                minio_message_type=MessageMinIO
             )
             print(f"grpc_connection - send() :\n {client_message_minio}")
             queue_client_message_minio.put(client_message_minio, block=False)
