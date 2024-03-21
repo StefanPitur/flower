@@ -17,22 +17,27 @@ syntax = "proto3";
 
 package flwr.proto;
 
+import "flwr/proto/minio.proto";
 import "flwr/proto/node.proto";
 import "flwr/proto/task.proto";
 
 service Fleet {
   rpc CreateNode(CreateNodeRequest) returns (stream CreateNodeResponseBatch) {}
+  rpc CreateNodeMinIO(MessageMinIO) returns (MessageMinIO) {}
   rpc DeleteNode(stream DeleteNodeRequest) returns (DeleteNodeResponse) {}
+  rpc DeleteNodeMinIO(MessageMinIO) returns (MessageMinIO) {}
 
   // Retrieve one or more tasks, if possible
   //
   // HTTP API path: /api/v1/fleet/pull-task-ins
   rpc PullTaskIns(stream PullTaskInsRequestBatch) returns (stream PullTaskInsResponseBatch) {}
+  rpc PullTaskInsMinIO(MessageMinIO) returns (MessageMinIO) {}
 
   // Complete one or more tasks, if possible
   //
   // HTTP API path: /api/v1/fleet/push-task-res
   rpc PushTaskRes(stream PushTaskResRequestBatch) returns (stream PushTaskResResponseBatch) {}
+  rpc PushTaskResMinIO(MessageMinIO) returns (MessageMinIO) {}
 }
 
 // CreateNode messages

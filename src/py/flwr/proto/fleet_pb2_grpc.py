@@ -3,6 +3,7 @@
 import grpc
 
 from flwr.proto import fleet_pb2 as flwr_dot_proto_dot_fleet__pb2
+from flwr.proto import minio_pb2 as flwr_dot_proto_dot_minio__pb2
 
 
 class FleetStub(object):
@@ -19,20 +20,40 @@ class FleetStub(object):
                 request_serializer=flwr_dot_proto_dot_fleet__pb2.CreateNodeRequest.SerializeToString,
                 response_deserializer=flwr_dot_proto_dot_fleet__pb2.CreateNodeResponseBatch.FromString,
                 )
+        self.CreateNodeMinIO = channel.unary_unary(
+                '/flwr.proto.Fleet/CreateNodeMinIO',
+                request_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+                response_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+                )
         self.DeleteNode = channel.stream_unary(
                 '/flwr.proto.Fleet/DeleteNode',
                 request_serializer=flwr_dot_proto_dot_fleet__pb2.DeleteNodeRequest.SerializeToString,
                 response_deserializer=flwr_dot_proto_dot_fleet__pb2.DeleteNodeResponse.FromString,
+                )
+        self.DeleteNodeMinIO = channel.unary_unary(
+                '/flwr.proto.Fleet/DeleteNodeMinIO',
+                request_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+                response_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
                 )
         self.PullTaskIns = channel.stream_stream(
                 '/flwr.proto.Fleet/PullTaskIns',
                 request_serializer=flwr_dot_proto_dot_fleet__pb2.PullTaskInsRequestBatch.SerializeToString,
                 response_deserializer=flwr_dot_proto_dot_fleet__pb2.PullTaskInsResponseBatch.FromString,
                 )
+        self.PullTaskInsMinIO = channel.unary_unary(
+                '/flwr.proto.Fleet/PullTaskInsMinIO',
+                request_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+                response_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+                )
         self.PushTaskRes = channel.stream_stream(
                 '/flwr.proto.Fleet/PushTaskRes',
                 request_serializer=flwr_dot_proto_dot_fleet__pb2.PushTaskResRequestBatch.SerializeToString,
                 response_deserializer=flwr_dot_proto_dot_fleet__pb2.PushTaskResResponseBatch.FromString,
+                )
+        self.PushTaskResMinIO = channel.unary_unary(
+                '/flwr.proto.Fleet/PushTaskResMinIO',
+                request_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+                response_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
                 )
 
 
@@ -45,7 +66,19 @@ class FleetServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CreateNodeMinIO(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def DeleteNode(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteNodeMinIO(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -60,11 +93,23 @@ class FleetServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def PullTaskInsMinIO(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def PushTaskRes(self, request_iterator, context):
         """Complete one or more tasks, if possible
 
         HTTP API path: /api/v1/fleet/push-task-res
         """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def PushTaskResMinIO(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -77,20 +122,40 @@ def add_FleetServicer_to_server(servicer, server):
                     request_deserializer=flwr_dot_proto_dot_fleet__pb2.CreateNodeRequest.FromString,
                     response_serializer=flwr_dot_proto_dot_fleet__pb2.CreateNodeResponseBatch.SerializeToString,
             ),
+            'CreateNodeMinIO': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateNodeMinIO,
+                    request_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+                    response_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+            ),
             'DeleteNode': grpc.stream_unary_rpc_method_handler(
                     servicer.DeleteNode,
                     request_deserializer=flwr_dot_proto_dot_fleet__pb2.DeleteNodeRequest.FromString,
                     response_serializer=flwr_dot_proto_dot_fleet__pb2.DeleteNodeResponse.SerializeToString,
+            ),
+            'DeleteNodeMinIO': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteNodeMinIO,
+                    request_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+                    response_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
             ),
             'PullTaskIns': grpc.stream_stream_rpc_method_handler(
                     servicer.PullTaskIns,
                     request_deserializer=flwr_dot_proto_dot_fleet__pb2.PullTaskInsRequestBatch.FromString,
                     response_serializer=flwr_dot_proto_dot_fleet__pb2.PullTaskInsResponseBatch.SerializeToString,
             ),
+            'PullTaskInsMinIO': grpc.unary_unary_rpc_method_handler(
+                    servicer.PullTaskInsMinIO,
+                    request_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+                    response_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+            ),
             'PushTaskRes': grpc.stream_stream_rpc_method_handler(
                     servicer.PushTaskRes,
                     request_deserializer=flwr_dot_proto_dot_fleet__pb2.PushTaskResRequestBatch.FromString,
                     response_serializer=flwr_dot_proto_dot_fleet__pb2.PushTaskResResponseBatch.SerializeToString,
+            ),
+            'PushTaskResMinIO': grpc.unary_unary_rpc_method_handler(
+                    servicer.PushTaskResMinIO,
+                    request_deserializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+                    response_serializer=flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -120,6 +185,23 @@ class Fleet(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def CreateNodeMinIO(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/flwr.proto.Fleet/CreateNodeMinIO',
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def DeleteNode(request_iterator,
             target,
             options=(),
@@ -133,6 +215,23 @@ class Fleet(object):
         return grpc.experimental.stream_unary(request_iterator, target, '/flwr.proto.Fleet/DeleteNode',
             flwr_dot_proto_dot_fleet__pb2.DeleteNodeRequest.SerializeToString,
             flwr_dot_proto_dot_fleet__pb2.DeleteNodeResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def DeleteNodeMinIO(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/flwr.proto.Fleet/DeleteNodeMinIO',
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -154,6 +253,23 @@ class Fleet(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def PullTaskInsMinIO(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/flwr.proto.Fleet/PullTaskInsMinIO',
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def PushTaskRes(request_iterator,
             target,
             options=(),
@@ -167,5 +283,22 @@ class Fleet(object):
         return grpc.experimental.stream_stream(request_iterator, target, '/flwr.proto.Fleet/PushTaskRes',
             flwr_dot_proto_dot_fleet__pb2.PushTaskResRequestBatch.SerializeToString,
             flwr_dot_proto_dot_fleet__pb2.PushTaskResResponseBatch.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def PushTaskResMinIO(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/flwr.proto.Fleet/PushTaskResMinIO',
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.SerializeToString,
+            flwr_dot_proto_dot_minio__pb2.MessageMinIO.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

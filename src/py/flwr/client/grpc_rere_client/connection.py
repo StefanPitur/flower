@@ -13,8 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Contextmanager for a gRPC request-response channel to the Flower server."""
-
-
+import uuid
 from contextlib import contextmanager
 from copy import copy
 from logging import DEBUG, ERROR
@@ -33,6 +32,7 @@ from flwr.common.grpc_message_batching import batch_grpc_message, get_message_fr
 from flwr.common.logger import log, warn_experimental_feature
 from flwr.common.message import Message, Metadata
 from flwr.common.serde import message_from_taskins, message_to_taskres
+from flwr.minio.minio_grpc_message import push_message_to_minio, get_message_from_minio
 from flwr.proto.fleet_pb2 import (  # pylint: disable=E0611
     CreateNodeRequest,
     DeleteNodeRequest,
@@ -41,6 +41,7 @@ from flwr.proto.fleet_pb2 import (  # pylint: disable=E0611
     PullTaskInsResponse, PushTaskResRequestBatch,
 )
 from flwr.proto.fleet_pb2_grpc import FleetStub  # pylint: disable=E0611
+from flwr.proto.minio_pb2 import MessageMinIO
 from flwr.proto.node_pb2 import Node  # pylint: disable=E0611
 from flwr.proto.task_pb2 import TaskIns  # pylint: disable=E0611
 from flwr.server.server_config import CommunicationType
@@ -104,6 +105,9 @@ def grpc_request_response(
     """
     warn_experimental_feature("`grpc-rere`")
 
+    if communication_type == CommunicationType.MINIO and (minio_client is None or minio_bucket_name is None):
+        raise ValueError("When using MINIO, you must provide both minio_client and minio_bucket_name")
+
     if isinstance(root_certificates, str):
         root_certificates = Path(root_certificates).read_bytes()
 
@@ -129,14 +133,35 @@ def grpc_request_response(
     def create_node() -> None:
         """Set create_node."""
         create_node_request = CreateNodeRequest()
-        create_node_response_iterator = stub.CreateNode(
-            request=create_node_request,
-        )
 
-        create_node_response = get_message_from_batches(
-            batch_messages_iterator=create_node_response_iterator,
-            message_type=CreateNodeResponse
-        )
+        if communication_type == CommunicationType.GRPC:
+            create_node_response_iterator = stub.CreateNode(
+                request=create_node_request,
+            )
+
+            create_node_response = get_message_from_batches(
+                batch_messages_iterator=create_node_response_iterator,
+                message_type=CreateNodeResponse
+            )
+        elif communication_type == CommunicationType.MINIO:
+            create_node_request_minio = push_message_to_minio(
+                minio_client=minio_client,
+                bucket_name=minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=create_node_request,
+                minio_message_type=MessageMinIO
+            )
+
+            create_node_response_minio: MessageMinIO = stub.CreateNodeMinIO(request=create_node_request_minio)
+
+            create_node_response = get_message_from_minio(
+                minio_client=minio_client,
+                minio_message_iterator=iter([create_node_response_minio]),
+                message_type=CreateNodeResponse
+            )
+
+        else:
+            raise ValueError(f"Unknown communication type - {communication_type}")
 
         node_store[KEY_NODE] = create_node_response.node
 
@@ -150,16 +175,28 @@ def grpc_request_response(
 
         delete_node_request = DeleteNodeRequest(node=node)
 
-        delete_node_request_iterator = iter(
-            batch_grpc_message(
-                message=delete_node_request,
-                batch_size=max_message_length,
-                batch_message_type=DeleteNodeRequestBatch,
-                batch_message_header_size=DELETE_NODE_REQUEST_BATCH_HEADER_SIZE
+        if communication_type == CommunicationType.GRPC:
+            delete_node_request_iterator = iter(
+                batch_grpc_message(
+                    message=delete_node_request,
+                    batch_size=max_message_length,
+                    batch_message_type=DeleteNodeRequestBatch,
+                    batch_message_header_size=DELETE_NODE_REQUEST_BATCH_HEADER_SIZE
+                )
             )
-        )
 
-        stub.DeleteNode(request_iterator=delete_node_request_iterator)
+            stub.DeleteNode(request_iterator=delete_node_request_iterator)
+        elif communication_type == CommunicationType.MINIO:
+            delete_node_request_minio = push_message_to_minio(
+                minio_client=minio_client,
+                bucket_name=minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=delete_node_request,
+                minio_message_type=MessageMinIO
+            )
+            stub.DeleteNodeMinIO(request=delete_node_request_minio)
+        else:
+            raise ValueError(f"Unknown communication type - {communication_type}")
         del node_store[KEY_NODE]
 
     def receive() -> Optional[Message]:
@@ -173,21 +210,40 @@ def grpc_request_response(
         # Request instructions (task) from server
         request = PullTaskInsRequest(node=node)
 
-        request_iterator = iter(
-            batch_grpc_message(
-                message=request,
-                batch_size=max_message_length,
-                batch_message_type=PullTaskInsRequestBatch,
-                batch_message_header_size=PULL_TASK_INS_REQUEST_BATCH_HEADER_SIZE
+        if communication_type == CommunicationType.GRPC:
+            request_iterator = iter(
+                batch_grpc_message(
+                    message=request,
+                    batch_size=max_message_length,
+                    batch_message_type=PullTaskInsRequestBatch,
+                    batch_message_header_size=PULL_TASK_INS_REQUEST_BATCH_HEADER_SIZE
+                )
             )
-        )
 
-        response_iterator = stub.PullTaskIns(request_iterator=request_iterator)
+            response_iterator = stub.PullTaskIns(request_iterator=request_iterator)
 
-        response = get_message_from_batches(
-            batch_messages_iterator=response_iterator,
-            message_type=PullTaskInsResponse
-        )
+            response = get_message_from_batches(
+                batch_messages_iterator=response_iterator,
+                message_type=PullTaskInsResponse
+            )
+        elif communication_type == CommunicationType.MINIO:
+            pull_task_ins_request_minio = push_message_to_minio(
+                minio_client=minio_client,
+                bucket_name=minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=request,
+                minio_message_type=MessageMinIO
+            )
+
+            pull_task_ins_response_minio: MessageMinIO = stub.PullTaskInsMinIO(request=pull_task_ins_request_minio)
+
+            response = get_message_from_minio(
+                minio_client=minio_client,
+                minio_message_iterator=iter([pull_task_ins_response_minio]),
+                message_type=CreateNodeResponse
+            )
+        else:
+            raise ValueError(f"Unknown communication type - {communication_type}")
 
         # Get the current TaskIns
         task_ins: Optional[TaskIns] = get_task_ins(response)
@@ -232,16 +288,29 @@ def grpc_request_response(
         # Serialize ProtoBuf to bytes
         request = PushTaskResRequest(task_res_list=[task_res])
 
-        request_iterator = iter(
-            batch_grpc_message(
-                message=request,
-                batch_size=max_message_length,
-                batch_message_type=PushTaskResRequestBatch,
-                batch_message_header_size=PUSH_TASK_RES_REQUEST_BATCH_HEADER_SIZE
+        if communication_type == CommunicationType.GRPC:
+            request_iterator = iter(
+                batch_grpc_message(
+                    message=request,
+                    batch_size=max_message_length,
+                    batch_message_type=PushTaskResRequestBatch,
+                    batch_message_header_size=PUSH_TASK_RES_REQUEST_BATCH_HEADER_SIZE
+                )
             )
-        )
 
-        _ = stub.PushTaskRes(request_iterator=request_iterator)
+            _ = stub.PushTaskRes(request_iterator=request_iterator)
+        elif communication_type == CommunicationType.MINIO:
+            push_task_res_request_minio = push_message_to_minio(
+                minio_client=minio_client,
+                bucket_name=minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=request,
+                minio_message_type=MessageMinIO
+            )
+
+            stub.PushTaskResMinIO(request=push_task_res_request_minio)
+        else:
+            raise ValueError(f"Unknown communication type - {communication_type}")
 
         state[KEY_METADATA] = None
 

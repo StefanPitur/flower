@@ -43,10 +43,11 @@ from flwr.common.grpc import create_channel
 from flwr.common.grpc_message_batching import batch_grpc_message, get_message_from_batches
 from flwr.common.logger import log
 from flwr.minio.minio_grpc_message import push_message_to_minio, get_message_from_minio
+from flwr.proto.minio_pb2 import MessageMinIO
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ClientMessage,
     Reason,
-    ServerMessageChunk, MessageMinIO, ClientMessageChunk, ServerMessage,
+    ServerMessageChunk, ClientMessageChunk, ServerMessage,
 )
 from flwr.proto.transport_pb2_grpc import FlowerServiceStub  # pylint: disable=E0611
 from flwr.server.server_config import CommunicationType

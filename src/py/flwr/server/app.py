@@ -313,7 +313,6 @@ def run_fleet_api(
             state_factory=state_factory,
             certificates=certificates,
             grpc_max_message_length=grpc_max_message_length,
-            communication_type=communication_type,
             minio_client=minio_client,
             minio_bucket_name=minio_bucket_name
         )
@@ -484,7 +483,6 @@ def _run_fleet_api_grpc_rere(
     state_factory: StateFactory,
     certificates: Optional[Tuple[bytes, bytes, bytes]],
     grpc_max_message_length: GRPC_MAX_MESSAGE_LENGTH,
-    communication_type: CommunicationType = CommunicationType.GRPC,
     minio_client: Optional[Minio] = None,
     minio_bucket_name: Optional[str] = None
 ) -> grpc.Server:
@@ -492,7 +490,9 @@ def _run_fleet_api_grpc_rere(
     # Create Fleet API gRPC server
     fleet_servicer = FleetServicer(
         state_factory=state_factory,
-        max_message_length=grpc_max_message_length
+        max_message_length=grpc_max_message_length,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
     )
     fleet_add_servicer_to_server_fn = add_FleetServicer_to_server
     fleet_grpc_server = generic_create_grpc_server(

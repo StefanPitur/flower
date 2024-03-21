@@ -3,6 +3,7 @@
 isort:skip_file
 """
 import abc
+import flwr.proto.minio_pb2
 import flwr.proto.transport_pb2
 import grpc
 import typing
@@ -14,8 +15,8 @@ class FlowerServiceStub:
         flwr.proto.transport_pb2.ServerMessageChunk]
 
     JoinMinIO: grpc.StreamStreamMultiCallable[
-        flwr.proto.transport_pb2.MessageMinIO,
-        flwr.proto.transport_pb2.MessageMinIO]
+        flwr.proto.minio_pb2.MessageMinIO,
+        flwr.proto.minio_pb2.MessageMinIO]
 
 
 class FlowerServiceServicer(metaclass=abc.ABCMeta):
@@ -27,9 +28,9 @@ class FlowerServiceServicer(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def JoinMinIO(self,
-        request_iterator: typing.Iterator[flwr.proto.transport_pb2.MessageMinIO],
+        request_iterator: typing.Iterator[flwr.proto.minio_pb2.MessageMinIO],
         context: grpc.ServicerContext,
-    ) -> typing.Iterator[flwr.proto.transport_pb2.MessageMinIO]: ...
+    ) -> typing.Iterator[flwr.proto.minio_pb2.MessageMinIO]: ...
 
 
 def add_FlowerServiceServicer_to_server(servicer: FlowerServiceServicer, server: grpc.Server) -> None: ...

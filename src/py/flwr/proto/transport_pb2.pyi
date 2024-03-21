@@ -83,20 +83,6 @@ class Parameters(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["tensor_type",b"tensor_type","tensors",b"tensors"]) -> None: ...
 global___Parameters = Parameters
 
-class MessageMinIO(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
-    BUCKET_NAME_FIELD_NUMBER: builtins.int
-    SOURCE_FILE_FIELD_NUMBER: builtins.int
-    bucket_name: typing.Text
-    source_file: typing.Text
-    def __init__(self,
-        *,
-        bucket_name: typing.Text = ...,
-        source_file: typing.Text = ...,
-        ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["bucket_name",b"bucket_name","source_file",b"source_file"]) -> None: ...
-global___MessageMinIO = MessageMinIO
-
 class ServerMessageChunk(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
     MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int

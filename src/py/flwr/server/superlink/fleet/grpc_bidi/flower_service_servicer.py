@@ -29,9 +29,10 @@ from flwr.common.constant import SERVER_MESSAGE_BATCH_HEADER_SIZE
 from flwr.common.grpc_message_batching import get_message_from_batches, batch_grpc_message
 from flwr.minio.minio_grpc_message import get_message_from_minio, push_message_to_minio
 from flwr.proto import transport_pb2_grpc  # pylint: disable=E0611
+from flwr.proto.minio_pb2 import MessageMinIO
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ServerMessageChunk,
-    ClientMessageChunk, MessageMinIO, ClientMessage
+    ClientMessageChunk, ClientMessage
 )
 from flwr.server.client_manager import ClientManager
 from flwr.server.superlink.fleet.grpc_bidi.grpc_bridge import (
