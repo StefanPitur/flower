@@ -33,20 +33,21 @@ from flwr.common import (
 )
 from flwr.common import recordset_compat as compat
 from flwr.common import serde
-from flwr.common.client_message_batching import batch_client_message, push_client_message_to_minio
+from flwr.common.client_message_batching import push_client_message_to_minio
 from flwr.common.constant import (
     MESSAGE_TYPE_EVALUATE,
     MESSAGE_TYPE_FIT,
     MESSAGE_TYPE_GET_PARAMETERS,
-    MESSAGE_TYPE_GET_PROPERTIES,
+    MESSAGE_TYPE_GET_PROPERTIES, CLIENT_MESSAGE_BATCH_HEADER_SIZE,
 )
 from flwr.common.grpc import create_channel
+from flwr.common.grpc_message_batching import batch_grpc_message, get_message_from_batches
 from flwr.common.logger import log
-from flwr.common.server_message_batching import get_server_message_from_batches, get_server_message_from_minio
+from flwr.common.server_message_batching import get_server_message_from_minio
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ClientMessage,
     Reason,
-    ServerMessageChunk, MessageMinIO,
+    ServerMessageChunk, MessageMinIO, ClientMessageChunk, ServerMessage,
 )
 from flwr.proto.transport_pb2_grpc import FlowerServiceStub  # pylint: disable=E0611
 from flwr.server.server_config import CommunicationType
@@ -154,7 +155,10 @@ def grpc_connection(  # pylint: disable=R0915
         print("STEFAN - connection.py in grpc_connection.receive()")
         # Receive ServerMessage proto
         if communication_type == CommunicationType.GRPC:
-            proto = get_server_message_from_batches(server_message_chunks_iterator)
+            proto = get_message_from_batches(
+                batch_messages_iterator=server_message_chunks_iterator,
+                message_type=ServerMessage
+            )
         elif communication_type == CommunicationType.MINIO:
             proto = get_server_message_from_minio(
                 minio_client=minio_client,
@@ -252,7 +256,12 @@ def grpc_connection(  # pylint: disable=R0915
             raise ValueError(f"Invalid message type: {message_type}")
 
         if communication_type == CommunicationType.GRPC:
-            client_message_chunks = batch_client_message(msg_proto, max_message_length)
+            client_message_chunks = batch_grpc_message(
+                message=msg_proto,
+                batch_size=max_message_length,
+                batch_message_type=ClientMessageChunk,
+                batch_message_header_size=CLIENT_MESSAGE_BATCH_HEADER_SIZE
+            )
             for client_message_chunk in client_message_chunks:
                 queue_client_message.put(client_message_chunk, block=False)
         elif communication_type == CommunicationType.MINIO:

@@ -25,17 +25,16 @@ import grpc
 
 from flwr.common import ConfigsRecord, Message, Metadata, RecordSet
 from flwr.common import recordset_compat as compat
-from flwr.common.constant import MESSAGE_TYPE_GET_PROPERTIES
+from flwr.common.constant import MESSAGE_TYPE_GET_PROPERTIES, SERVER_MESSAGE_BATCH_HEADER_SIZE
 from flwr.common.typing import Code, GetPropertiesRes, Status
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
-    ServerMessage, ClientMessageChunk, ServerMessageChunk,
+    ServerMessage, ClientMessageChunk, ServerMessageChunk, ClientMessage,
 )
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.superlink.fleet.grpc_bidi.grpc_server import start_grpc_server
 
 from .connection import grpc_connection
-from ...common.server_message_batching import batch_server_message
-from ...common.client_message_batching import get_client_message_from_batches
+from ...common.grpc_message_batching import get_message_from_batches, batch_grpc_message
 from ...server.server_config import CommunicationType
 
 EXPECTED_NUM_SERVER_MESSAGE = 10
@@ -43,14 +42,18 @@ EXPECTED_NUM_SERVER_MESSAGE = 10
 SERVER_MESSAGE = ServerMessage(get_properties_ins=ServerMessage.GetPropertiesIns())
 SERVER_MESSAGE_RECONNECT = ServerMessage(reconnect_ins=ServerMessage.ReconnectIns())
 
-SERVER_MESSAGE_CHUNKS = batch_server_message(
-    server_message=SERVER_MESSAGE,
-    chunk_size=4
+SERVER_MESSAGE_CHUNKS = batch_grpc_message(
+    message=SERVER_MESSAGE,
+    batch_size=4,
+    batch_message_type=ServerMessageChunk,
+    batch_message_header_size=SERVER_MESSAGE_BATCH_HEADER_SIZE,
 )
 
-SERVER_MESSAGE_CHUNKS_RECONNECT = batch_server_message(
-    server_message=SERVER_MESSAGE_RECONNECT,
-    chunk_size=4
+SERVER_MESSAGE_CHUNKS_RECONNECT = batch_grpc_message(
+    message=SERVER_MESSAGE_RECONNECT,
+    batch_size=4,
+    batch_message_type=ServerMessageChunk,
+    batch_message_header_size=SERVER_MESSAGE_BATCH_HEADER_SIZE,
 )
 
 MESSAGE_GET_PROPERTIES = Message(
@@ -110,7 +113,10 @@ def mock_join(  # type: ignore # pylint: disable=invalid-name
                 yield server_message_reconnect_chunk
 
         try:
-            client_message = get_client_message_from_batches(request_iterator)
+            client_message = get_message_from_batches(
+                batch_messages_iterator=request_iterator,
+                message_type=ClientMessage
+            )
             if client_message.HasField("disconnect_res"):
                 break
         except StopIteration:

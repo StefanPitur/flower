@@ -25,12 +25,14 @@ import grpc
 from iterators import TimeoutIterator
 from minio import Minio
 
-from flwr.common.client_message_batching import get_client_message_from_batches, get_client_message_from_minio
-from flwr.common.server_message_batching import batch_server_message, push_server_message_to_minio
+from flwr.common.client_message_batching import get_client_message_from_minio
+from flwr.common.constant import SERVER_MESSAGE_BATCH_HEADER_SIZE
+from flwr.common.grpc_message_batching import get_message_from_batches, batch_grpc_message
+from flwr.common.server_message_batching import push_server_message_to_minio
 from flwr.proto import transport_pb2_grpc  # pylint: disable=E0611
 from flwr.proto.transport_pb2 import (  # pylint: disable=E0611
     ServerMessageChunk,
-    ClientMessageChunk, MessageMinIO
+    ClientMessageChunk, MessageMinIO, ClientMessage
 )
 from flwr.server.client_manager import ClientManager
 from flwr.server.superlink.fleet.grpc_bidi.grpc_bridge import (
@@ -126,9 +128,11 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
                     ins_wrapper: InsWrapper = next(ins_wrapper_iterator)
                     server_message = ins_wrapper.server_message
 
-                    server_message_chunks = batch_server_message(
-                        server_message=server_message,
-                        chunk_size=self.max_message_length
+                    server_message_chunks = batch_grpc_message(
+                        message=server_message,
+                        batch_size=self.max_message_length,
+                        batch_message_type=ServerMessageChunk,
+                        batch_message_header_size=SERVER_MESSAGE_BATCH_HEADER_SIZE
                     )
                     for server_message_chunk in server_message_chunks:
                         yield server_message_chunk
@@ -138,7 +142,10 @@ class FlowerServiceServicer(transport_pb2_grpc.FlowerServiceServicer):
                         client_message_iterator.set_timeout(ins_wrapper.timeout)
 
                     # Wait for client message
-                    client_message = get_client_message_from_batches(client_message_iterator)
+                    client_message = get_message_from_batches(
+                        batch_messages_iterator=client_message_iterator,
+                        message_type=ClientMessage
+                    )
 
                     if client_message is client_message_iterator.get_sentinel():
                         # Important: calling `context.abort` in gRPC always

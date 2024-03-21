@@ -41,6 +41,9 @@ MESSAGE_TYPE_GET_PARAMETERS = "get_parameters"
 MESSAGE_TYPE_FIT = "fit"
 MESSAGE_TYPE_EVALUATE = "evaluate"
 
+SERVER_MESSAGE_BATCH_HEADER_SIZE = 2
+CLIENT_MESSAGE_BATCH_HEADER_SIZE = 2
+
 
 class SType:
     """Serialisation type."""

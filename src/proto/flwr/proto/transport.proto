@@ -51,7 +51,7 @@ message MessageMinIO {
 }
 
 message ServerMessageChunk {
-  bytes server_message_chunk = 1;
+  bytes message_batch_bytes = 1;
 }
 
 message ServerMessage {
@@ -76,7 +76,7 @@ message ServerMessage {
 }
 
 message ClientMessageChunk {
-  bytes client_message_chunk = 1;
+  bytes message_batch_bytes = 1;
 }
 
 message ClientMessage {

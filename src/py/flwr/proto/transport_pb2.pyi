@@ -99,13 +99,13 @@ global___MessageMinIO = MessageMinIO
 
 class ServerMessageChunk(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
-    SERVER_MESSAGE_CHUNK_FIELD_NUMBER: builtins.int
-    server_message_chunk: builtins.bytes
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
     def __init__(self,
         *,
-        server_message_chunk: builtins.bytes = ...,
+        message_batch_bytes: builtins.bytes = ...,
         ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["server_message_chunk",b"server_message_chunk"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
 global___ServerMessageChunk = ServerMessageChunk
 
 class ServerMessage(google.protobuf.message.Message):
@@ -264,13 +264,13 @@ global___ServerMessage = ServerMessage
 
 class ClientMessageChunk(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
-    CLIENT_MESSAGE_CHUNK_FIELD_NUMBER: builtins.int
-    client_message_chunk: builtins.bytes
+    MESSAGE_BATCH_BYTES_FIELD_NUMBER: builtins.int
+    message_batch_bytes: builtins.bytes
     def __init__(self,
         *,
-        client_message_chunk: builtins.bytes = ...,
+        message_batch_bytes: builtins.bytes = ...,
         ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["client_message_chunk",b"client_message_chunk"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["message_batch_bytes",b"message_batch_bytes"]) -> None: ...
 global___ClientMessageChunk = ClientMessageChunk
 
 class ClientMessage(google.protobuf.message.Message):
