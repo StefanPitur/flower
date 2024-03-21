@@ -21,13 +21,15 @@ import threading
 import traceback
 from logging import ERROR, INFO, WARNING
 from time import sleep
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import grpc
 
-from flwr.common import EventType, event, log
+from flwr.common import EventType, event, log, GRPC_MAX_MESSAGE_LENGTH
+from flwr.minio.utils import create_minio_client
 from flwr.server.driver.driver import Driver
 from flwr.server.run_serverapp import run
+from flwr.server.server_config import CommunicationType
 from flwr.server.superlink.driver.driver_grpc import run_driver_api_grpc
 from flwr.server.superlink.fleet import vce
 from flwr.server.superlink.state import StateFactory
@@ -77,8 +79,26 @@ def get_thread_exception_hook(stop_event: asyncio.Event) -> Callable[[Any], None
     return execepthook
 
 
-def run_simulation() -> None:
+def run_simulation(
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    grpc_max_message_length: int = GRPC_MAX_MESSAGE_LENGTH,
+    minio_url: Optional[str] = None,
+    minio_access_key: Optional[str] = None,
+    minio_secret_key: Optional[str] = None,
+    minio_bucket_name: Optional[str] = None
+) -> None:
     """Run Simulation Engine."""
+    minio_client = None
+    if communication_type == communication_type.MINIO:
+        if minio_bucket_name is None:
+            raise ValueError("When using MinIO, you must specify the bucket name of the shared instance")
+
+        minio_client = create_minio_client(
+            minio_url=minio_url,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key
+        )
+
     args = _parse_args_run_simulation().parse_args()
 
     # Load JSON config
@@ -105,6 +125,9 @@ def run_simulation() -> None:
         address=args.driver_api_address,
         state_factory=state_factory,
         certificates=None,
+        grpc_max_message_length=grpc_max_message_length,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
     )
 
     f_stop = asyncio.Event()

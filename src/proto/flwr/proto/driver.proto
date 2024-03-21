@@ -17,36 +17,66 @@ syntax = "proto3";
 
 package flwr.proto;
 
+import "flwr/proto/minio.proto";
 import "flwr/proto/node.proto";
 import "flwr/proto/task.proto";
 
 service Driver {
   // Request run_id
-  rpc CreateRun(CreateRunRequest) returns (CreateRunResponse) {}
+  rpc CreateRun(CreateRunRequest) returns (stream CreateRunResponseBatch) {}
+  rpc CreateRunMinIO(MessageMinIO) returns (MessageMinIO) {}
 
   // Return a set of nodes
-  rpc GetNodes(GetNodesRequest) returns (GetNodesResponse) {}
+  rpc GetNodes(stream GetNodesRequestBatch) returns (stream GetNodesResponseBatch) {}
+  rpc GetNodesMinIO(MessageMinIO) returns (MessageMinIO) {}
 
   // Create one or more tasks
-  rpc PushTaskIns(PushTaskInsRequest) returns (PushTaskInsResponse) {}
+  rpc PushTaskIns(stream PushTaskInsRequestBatch) returns (stream PushTaskInsResponseBatch) {}
+  rpc PushTaskInsMinIO(MessageMinIO) returns (MessageMinIO) {}
 
   // Get task results
-  rpc PullTaskRes(PullTaskResRequest) returns (PullTaskResResponse) {}
+  rpc PullTaskRes(stream PullTaskResRequestBatch) returns (stream PullTaskResResponseBatch) {}
+  rpc PullTaskResMinIO(MessageMinIO) returns (MessageMinIO) {}
 }
 
 // CreateRun
+message CreateRunResponseBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message CreateRunRequest {}
 message CreateRunResponse { sint64 run_id = 1; }
 
 // GetNodes messages
+message GetNodesRequestBatch {
+  bytes message_batch_bytes = 1;
+}
+message GetNodesResponseBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message GetNodesRequest { sint64 run_id = 1; }
 message GetNodesResponse { repeated Node nodes = 1; }
 
 // PushTaskIns messages
+message PushTaskInsRequestBatch {
+  bytes message_batch_bytes = 1;
+}
+message PushTaskInsResponseBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message PushTaskInsRequest { repeated TaskIns task_ins_list = 1; }
 message PushTaskInsResponse { repeated string task_ids = 2; }
 
 // PullTaskRes messages
+message PullTaskResRequestBatch {
+  bytes message_batch_bytes = 1;
+}
+message PullTaskResResponseBatch {
+  bytes message_batch_bytes = 1;
+}
+
 message PullTaskResRequest {
   Node node = 1;
   repeated string task_ids = 2;

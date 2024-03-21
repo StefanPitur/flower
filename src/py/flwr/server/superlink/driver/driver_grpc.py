@@ -18,6 +18,7 @@ from logging import INFO
 from typing import Optional, Tuple
 
 import grpc
+from minio import Minio
 
 from flwr.common import GRPC_MAX_MESSAGE_LENGTH
 from flwr.common.logger import log
@@ -33,12 +34,18 @@ from .driver_servicer import DriverServicer
 def run_driver_api_grpc(
     address: str,
     state_factory: StateFactory,
+    grpc_max_message_length: int,
     certificates: Optional[Tuple[bytes, bytes, bytes]],
+    minio_client: Optional[Minio] = None,
+    minio_bucket_name: Optional[str] = None
 ) -> grpc.Server:
     """Run Driver API (gRPC, request-response)."""
     # Create Driver API gRPC server
-    driver_servicer: grpc.Server = DriverServicer(
+    driver_servicer = DriverServicer(
         state_factory=state_factory,
+        max_message_length=grpc_max_message_length,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
     )
     driver_add_servicer_to_server_fn = add_DriverServicer_to_server
     driver_grpc_server = generic_create_grpc_server(

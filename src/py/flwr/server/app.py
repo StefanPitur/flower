@@ -204,10 +204,29 @@ def start_server(  # pylint: disable=too-many-arguments,too-many-locals
     return hist
 
 
-def run_driver_api() -> None:
+def run_driver_api(
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    grpc_max_message_length: int = GRPC_MAX_MESSAGE_LENGTH,
+    minio_url: Optional[str] = None,
+    minio_access_key: Optional[str] = None,
+    minio_secret_key: Optional[str] = None,
+    minio_bucket_name: Optional[str] = None
+) -> None:
     """Run Flower server (Driver API)."""
     log(INFO, "Starting Flower server (Driver API)")
     event(EventType.RUN_DRIVER_API_ENTER)
+
+    minio_client = None
+    if communication_type == communication_type.MINIO:
+        if minio_bucket_name is None:
+            raise ValueError("When using MinIO, you must specify the bucket name of the shared instance")
+
+        minio_client = create_minio_client(
+            minio_url=minio_url,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key
+        )
+
     args = _parse_args_run_driver_api().parse_args()
 
     # Parse IP address
@@ -228,6 +247,9 @@ def run_driver_api() -> None:
         address=address,
         state_factory=state_factory,
         certificates=certificates,
+        grpc_max_message_length=grpc_max_message_length,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
     )
 
     # Graceful shutdown
@@ -378,6 +400,9 @@ def run_superlink(
         address=address,
         state_factory=state_factory,
         certificates=certificates,
+        grpc_max_message_length=grpc_max_message_length,
+        minio_client=minio_client,
+        minio_bucket_name=minio_bucket_name
     )
 
     grpc_servers = [driver_server]

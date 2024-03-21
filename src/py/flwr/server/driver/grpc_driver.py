@@ -13,16 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 """Flower driver service client."""
-
-
+import uuid
 from logging import ERROR, INFO, WARNING
-from typing import Optional
+from typing import Optional, Iterator
 
 import grpc
+from minio import Minio
 
 from flwr.common import EventType, event
-from flwr.common.grpc import create_channel
+from flwr.common.constant import GET_NODES_REQUEST_BATCH_HEADER_SIZE, PUSH_TASK_INS_REQUEST_BATCH_HEADER_SIZE, \
+    PULL_TASK_RES_REQUEST_BATCH_HEADER_SIZE
+from flwr.common.grpc import create_channel, GRPC_MAX_MESSAGE_LENGTH
+from flwr.common.grpc_message_batching import get_message_from_batches, batch_grpc_message
 from flwr.common.logger import log
+from flwr.minio.minio_grpc_message import push_message_to_minio, get_message_from_minio
 from flwr.proto.driver_pb2 import (  # pylint: disable=E0611
     CreateRunRequest,
     CreateRunResponse,
@@ -31,9 +35,12 @@ from flwr.proto.driver_pb2 import (  # pylint: disable=E0611
     PullTaskResRequest,
     PullTaskResResponse,
     PushTaskInsRequest,
-    PushTaskInsResponse,
+    PushTaskInsResponse, CreateRunResponseBatch, GetNodesRequestBatch, GetNodesResponseBatch, PushTaskInsRequestBatch,
+    PushTaskInsResponseBatch, PullTaskResRequestBatch, PullTaskResResponseBatch,
 )
 from flwr.proto.driver_pb2_grpc import DriverStub  # pylint: disable=E0611
+from flwr.proto.minio_pb2 import MessageMinIO
+from flwr.server.server_config import CommunicationType
 
 DEFAULT_SERVER_ADDRESS_DRIVER = "[::]:9091"
 
@@ -52,11 +59,19 @@ class GrpcDriver:
         self,
         driver_service_address: str = DEFAULT_SERVER_ADDRESS_DRIVER,
         root_certificates: Optional[bytes] = None,
+        grpc_max_message_length: int = GRPC_MAX_MESSAGE_LENGTH,
+        communication_type: CommunicationType = CommunicationType.GRPC,
+        minio_client: Optional[Minio] = None,
+        minio_bucket_name: Optional[str] = None
     ) -> None:
         self.driver_service_address = driver_service_address
         self.root_certificates = root_certificates
         self.channel: Optional[grpc.Channel] = None
         self.stub: Optional[DriverStub] = None
+        self.grpc_max_message_length = grpc_max_message_length
+        self.communication_type = communication_type
+        self.minio_client = minio_client
+        self.minio_bucket_name = minio_bucket_name
 
     def connect(self) -> None:
         """Connect to the Driver API."""
@@ -92,7 +107,28 @@ class GrpcDriver:
             raise ConnectionError("`GrpcDriver` instance not connected")
 
         # Call Driver API
-        res: CreateRunResponse = self.stub.CreateRun(request=req)
+        if self.communication_type == CommunicationType.GRPC:
+            res_batches_iterator: Iterator[CreateRunResponseBatch] = self.stub.CreateRun(request=req)
+            res: CreateRunResponse = get_message_from_batches(
+                batch_messages_iterator=res_batches_iterator,
+                message_type=CreateRunResponse
+            )
+        elif self.communication_type == CommunicationType.MINIO:
+            req_minio: MessageMinIO = push_message_to_minio(
+                minio_client=self.minio_client,
+                bucket_name=self.minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=req,
+                minio_message_type=MessageMinIO
+            )
+            res_minio = self.stub.CreateRunMinIO(request=req_minio)
+            res: CreateRunResponse = get_message_from_minio(
+                minio_client=self.minio_client,
+                minio_message_iterator=iter([res_minio]),
+                message_type=CreateRunResponse
+            )
+        else:
+            raise ValueError(f"Unsupported communication type: {self.communication_type}")
         return res
 
     def get_nodes(self, req: GetNodesRequest) -> GetNodesResponse:
@@ -103,7 +139,34 @@ class GrpcDriver:
             raise ConnectionError("`GrpcDriver` instance not connected")
 
         # Call gRPC Driver API
-        res: GetNodesResponse = self.stub.GetNodes(request=req)
+        if self.communication_type == CommunicationType.GRPC:
+            req_iterator: Iterator[GetNodesRequestBatch] = iter(batch_grpc_message(
+                message=req,
+                batch_size=self.grpc_max_message_length,
+                batch_message_type=GetNodesRequestBatch,
+                batch_message_header_size=GET_NODES_REQUEST_BATCH_HEADER_SIZE
+            ))
+            res_iterator: Iterator[GetNodesResponseBatch] = self.stub.GetNodes(request_iterator=req_iterator)
+            res: GetNodesResponse = get_message_from_batches(
+                batch_messages_iterator=res_iterator,
+                message_type=GetNodesResponse
+            )
+        elif self.communication_type == CommunicationType.MINIO:
+            req_minio: MessageMinIO = push_message_to_minio(
+                minio_client=self.minio_client,
+                bucket_name=self.minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=req,
+                minio_message_type=MessageMinIO
+            )
+            res_minio = self.stub.GetNodesMinIO(request=req_minio)
+            res: GetNodesResponse = get_message_from_minio(
+                minio_client=self.minio_client,
+                minio_message_iterator=iter([res_minio]),
+                message_type=GetNodesResponse
+            )
+        else:
+            raise ValueError(f"Unsupported communication type: {self.communication_type}")
         return res
 
     def push_task_ins(self, req: PushTaskInsRequest) -> PushTaskInsResponse:
@@ -114,7 +177,34 @@ class GrpcDriver:
             raise ConnectionError("`GrpcDriver` instance not connected")
 
         # Call gRPC Driver API
-        res: PushTaskInsResponse = self.stub.PushTaskIns(request=req)
+        if self.communication_type == CommunicationType.GRPC:
+            req_iterator: Iterator[PushTaskInsRequestBatch] = iter(batch_grpc_message(
+                message=req,
+                batch_size=self.grpc_max_message_length,
+                batch_message_type=PushTaskInsRequestBatch,
+                batch_message_header_size=PUSH_TASK_INS_REQUEST_BATCH_HEADER_SIZE
+            ))
+            res_iterator: Iterator[PushTaskInsResponseBatch] = self.stub.PushTaskIns(request_iterator=req_iterator)
+            res: PushTaskInsResponse = get_message_from_batches(
+                batch_messages_iterator=res_iterator,
+                message_type=PushTaskInsResponse
+            )
+        elif self.communication_type == CommunicationType.MINIO:
+            req_minio: MessageMinIO = push_message_to_minio(
+                minio_client=self.minio_client,
+                bucket_name=self.minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=req,
+                minio_message_type=MessageMinIO
+            )
+            res_minio = self.stub.PushTaskInsMinIO(request=req_minio)
+            res: PushTaskInsResponse = get_message_from_minio(
+                minio_client=self.minio_client,
+                minio_message_iterator=iter([res_minio]),
+                message_type=PushTaskInsResponse
+            )
+        else:
+            raise ValueError(f"Unsupported communication type: {self.communication_type}")
         return res
 
     def pull_task_res(self, req: PullTaskResRequest) -> PullTaskResResponse:
@@ -125,5 +215,32 @@ class GrpcDriver:
             raise ConnectionError("`GrpcDriver` instance not connected")
 
         # Call Driver API
-        res: PullTaskResResponse = self.stub.PullTaskRes(request=req)
+        if self.communication_type == CommunicationType.GRPC:
+            req_iterator: Iterator[PullTaskResRequestBatch] = iter(batch_grpc_message(
+                message=req,
+                batch_size=self.grpc_max_message_length,
+                batch_message_type=PullTaskResRequestBatch,
+                batch_message_header_size=PULL_TASK_RES_REQUEST_BATCH_HEADER_SIZE
+            ))
+            res_iterator: Iterator[PullTaskResResponseBatch] = self.stub.PullTaskRes(request_iterator=req_iterator)
+            res: PullTaskResResponse = get_message_from_batches(
+                batch_messages_iterator=res_iterator,
+                message_type=PullTaskResResponse
+            )
+        elif self.communication_type == CommunicationType.MINIO:
+            req_minio: MessageMinIO = push_message_to_minio(
+                minio_client=self.minio_client,
+                bucket_name=self.minio_bucket_name,
+                source_file=str(uuid.uuid4()),
+                message=req,
+                minio_message_type=MessageMinIO
+            )
+            res_minio = self.stub.PullTaskResMinIO(request=req_minio)
+            res: PullTaskResResponse = get_message_from_minio(
+                minio_client=self.minio_client,
+                minio_message_iterator=iter([res_minio]),
+                message_type=PullTaskResResponse
+            )
+        else:
+            raise ValueError(f"Unsupported communication type: {self.communication_type}")
         return res

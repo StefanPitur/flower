@@ -4,29 +4,47 @@ isort:skip_file
 """
 import abc
 import flwr.proto.driver_pb2
+import flwr.proto.minio_pb2
 import grpc
+import typing
 
 class DriverStub:
     def __init__(self, channel: grpc.Channel) -> None: ...
-    CreateRun: grpc.UnaryUnaryMultiCallable[
+    CreateRun: grpc.UnaryStreamMultiCallable[
         flwr.proto.driver_pb2.CreateRunRequest,
-        flwr.proto.driver_pb2.CreateRunResponse]
+        flwr.proto.driver_pb2.CreateRunResponseBatch]
     """Request run_id"""
 
-    GetNodes: grpc.UnaryUnaryMultiCallable[
-        flwr.proto.driver_pb2.GetNodesRequest,
-        flwr.proto.driver_pb2.GetNodesResponse]
+    CreateRunMinIO: grpc.UnaryUnaryMultiCallable[
+        flwr.proto.minio_pb2.MessageMinIO,
+        flwr.proto.minio_pb2.MessageMinIO]
+
+    GetNodes: grpc.StreamStreamMultiCallable[
+        flwr.proto.driver_pb2.GetNodesRequestBatch,
+        flwr.proto.driver_pb2.GetNodesResponseBatch]
     """Return a set of nodes"""
 
-    PushTaskIns: grpc.UnaryUnaryMultiCallable[
-        flwr.proto.driver_pb2.PushTaskInsRequest,
-        flwr.proto.driver_pb2.PushTaskInsResponse]
+    GetNodesMinIO: grpc.UnaryUnaryMultiCallable[
+        flwr.proto.minio_pb2.MessageMinIO,
+        flwr.proto.minio_pb2.MessageMinIO]
+
+    PushTaskIns: grpc.StreamStreamMultiCallable[
+        flwr.proto.driver_pb2.PushTaskInsRequestBatch,
+        flwr.proto.driver_pb2.PushTaskInsResponseBatch]
     """Create one or more tasks"""
 
-    PullTaskRes: grpc.UnaryUnaryMultiCallable[
-        flwr.proto.driver_pb2.PullTaskResRequest,
-        flwr.proto.driver_pb2.PullTaskResResponse]
+    PushTaskInsMinIO: grpc.UnaryUnaryMultiCallable[
+        flwr.proto.minio_pb2.MessageMinIO,
+        flwr.proto.minio_pb2.MessageMinIO]
+
+    PullTaskRes: grpc.StreamStreamMultiCallable[
+        flwr.proto.driver_pb2.PullTaskResRequestBatch,
+        flwr.proto.driver_pb2.PullTaskResResponseBatch]
     """Get task results"""
+
+    PullTaskResMinIO: grpc.UnaryUnaryMultiCallable[
+        flwr.proto.minio_pb2.MessageMinIO,
+        flwr.proto.minio_pb2.MessageMinIO]
 
 
 class DriverServicer(metaclass=abc.ABCMeta):
@@ -34,33 +52,57 @@ class DriverServicer(metaclass=abc.ABCMeta):
     def CreateRun(self,
         request: flwr.proto.driver_pb2.CreateRunRequest,
         context: grpc.ServicerContext,
-    ) -> flwr.proto.driver_pb2.CreateRunResponse:
+    ) -> typing.Iterator[flwr.proto.driver_pb2.CreateRunResponseBatch]:
         """Request run_id"""
         pass
 
     @abc.abstractmethod
-    def GetNodes(self,
-        request: flwr.proto.driver_pb2.GetNodesRequest,
+    def CreateRunMinIO(self,
+        request: flwr.proto.minio_pb2.MessageMinIO,
         context: grpc.ServicerContext,
-    ) -> flwr.proto.driver_pb2.GetNodesResponse:
+    ) -> flwr.proto.minio_pb2.MessageMinIO: ...
+
+    @abc.abstractmethod
+    def GetNodes(self,
+        request_iterator: typing.Iterator[flwr.proto.driver_pb2.GetNodesRequestBatch],
+        context: grpc.ServicerContext,
+    ) -> typing.Iterator[flwr.proto.driver_pb2.GetNodesResponseBatch]:
         """Return a set of nodes"""
         pass
 
     @abc.abstractmethod
-    def PushTaskIns(self,
-        request: flwr.proto.driver_pb2.PushTaskInsRequest,
+    def GetNodesMinIO(self,
+        request: flwr.proto.minio_pb2.MessageMinIO,
         context: grpc.ServicerContext,
-    ) -> flwr.proto.driver_pb2.PushTaskInsResponse:
+    ) -> flwr.proto.minio_pb2.MessageMinIO: ...
+
+    @abc.abstractmethod
+    def PushTaskIns(self,
+        request_iterator: typing.Iterator[flwr.proto.driver_pb2.PushTaskInsRequestBatch],
+        context: grpc.ServicerContext,
+    ) -> typing.Iterator[flwr.proto.driver_pb2.PushTaskInsResponseBatch]:
         """Create one or more tasks"""
         pass
 
     @abc.abstractmethod
-    def PullTaskRes(self,
-        request: flwr.proto.driver_pb2.PullTaskResRequest,
+    def PushTaskInsMinIO(self,
+        request: flwr.proto.minio_pb2.MessageMinIO,
         context: grpc.ServicerContext,
-    ) -> flwr.proto.driver_pb2.PullTaskResResponse:
+    ) -> flwr.proto.minio_pb2.MessageMinIO: ...
+
+    @abc.abstractmethod
+    def PullTaskRes(self,
+        request_iterator: typing.Iterator[flwr.proto.driver_pb2.PullTaskResRequestBatch],
+        context: grpc.ServicerContext,
+    ) -> typing.Iterator[flwr.proto.driver_pb2.PullTaskResResponseBatch]:
         """Get task results"""
         pass
+
+    @abc.abstractmethod
+    def PullTaskResMinIO(self,
+        request: flwr.proto.minio_pb2.MessageMinIO,
+        context: grpc.ServicerContext,
+    ) -> flwr.proto.minio_pb2.MessageMinIO: ...
 
 
 def add_DriverServicer_to_server(servicer: DriverServicer, server: grpc.Server) -> None: ...
