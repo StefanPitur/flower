@@ -49,7 +49,7 @@ if __name__ == "__main__":
     fl.client.start_client(
         server_address="localhost:8080",
         client=FlowerClient().to_client(),
-        communication_type=CommunicationType.GRPC,
+        communication_type=CommunicationType.MINIO,
         minio_url="localhost:9000",
         minio_access_key="KiCzggMrhevUXL7qEBaX",
         minio_secret_key="LmFrozQ4eRAnBcjzPRAjr77HAa7Bz3YYVmkv72MT",
