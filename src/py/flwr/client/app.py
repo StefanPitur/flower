@@ -448,6 +448,11 @@ def start_numpy_client(
     root_certificates: Optional[bytes] = None,
     insecure: Optional[bool] = None,
     transport: Optional[str] = None,
+    communication_type: CommunicationType = CommunicationType.GRPC,
+    minio_url: Optional[str] = None,
+    minio_access_key: Optional[str] = None,
+    minio_secret_key: Optional[str] = None,
+    minio_bucket_name: Optional[str] = None
 ) -> None:
     """Start a Flower NumPyClient which connects to a gRPC server.
 
@@ -538,6 +543,11 @@ def start_numpy_client(
         root_certificates=root_certificates,
         insecure=insecure,
         transport=transport,
+        communication_type=communication_type,
+        minio_url=minio_url,
+        minio_access_key=minio_access_key,
+        minio_secret_key=minio_secret_key,
+        minio_bucket_name=minio_bucket_name
     )
 
 
